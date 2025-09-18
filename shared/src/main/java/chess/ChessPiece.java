@@ -59,11 +59,17 @@ public class ChessPiece {
         return possibleMoves;
     }
 
-    public List<ChessMove> getMovesKing(ChessBoard board, ChessPosition myPosition) {
+    public List<ChessMove> getMovesKingHorsey(ChessBoard board, ChessPosition myPosition, boolean horsey) {
         List<ChessMove> possibleMoves = new ArrayList<>();
 
         // checking if it is a pawn or a king
-        int[][] directions = new int[][] {{-1,1}, {0,1}, {1,1}, {-1,0}, {1,0}, {-1,-1}, {0,-1}, {1,-1}};
+        int[][] directions;
+        if (!horsey) {
+            directions = new int[][] {{-1,1}, {0,1}, {1,1}, {-1,0}, {1,0}, {-1,-1}, {0,-1}, {1,-1}};
+        } else {
+            directions = new int[][] {{-1,2}, {1,2}, {2,1}, {2,-1}, {-2,1}, {-2,-1}, {-1,-2}, {1,-2}};
+        }
+
 
         // adding potential moves
         for (int[] direction : directions) {
@@ -78,6 +84,41 @@ public class ChessPiece {
         }
         return possibleMoves;
     }
+
+    public List<ChessMove> getMovesPawn(ChessBoard board, ChessPosition myPosition) {
+        List<ChessMove> possibleMoves = new ArrayList<>();
+
+        int[][] directions = {{0,1}, {1,1}, {-1,1}};
+
+        for (int[] direction : directions) {
+            ChessPosition currentPosition = new ChessPosition(myPosition.getRow() + direction[0], myPosition.getColumn() + direction[1]);
+            ChessPiece currentPiece = board.getPiece(currentPosition);
+
+            // finding out if pawn is promotable. don't need to check edge cases since it only goes forward and once its promoted it turns to a new piece with boundaries.
+            boolean promote = myPosition.getColumn() + 1 == 8;
+
+            // if pawn is moving diagonal
+            if (currentPiece != null && direction[0] != 0) {
+                if (!promote) {
+                    possibleMoves.add(new ChessMove(myPosition, currentPosition, null));
+                } else {
+                    possibleMoves.add(new ChessMove(myPosition, currentPosition, PieceType.QUEEN));
+                }
+            }
+
+            // if pawn is moving forward
+            if (currentPiece == null && direction[0] == 0) {
+                if (!promote) {
+                    possibleMoves.add(new ChessMove(myPosition, currentPosition, null));
+                } else {
+                    possibleMoves.add(new ChessMove(myPosition, currentPosition, PieceType.QUEEN));
+                }
+            }
+        }
+
+        return possibleMoves;
+    }
+
 
     private final ChessGame.TeamColor pieceColor;
     private final PieceType type;
@@ -123,17 +164,17 @@ public class ChessPiece {
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition) {
         ChessPiece piece = board.getPiece(myPosition);
         if (piece.getPieceType() == PieceType.KING) {
-            return getMovesKing(board, myPosition);
+            return getMovesKingHorsey(board, myPosition, false);
         }else if (piece.getPieceType() == PieceType.QUEEN) {
             return getMoves(board, myPosition, true, true);
         }else if (piece.getPieceType() == PieceType.BISHOP) {
             return getMoves(board, myPosition, true, false);
         }else if (piece.getPieceType() == PieceType.KNIGHT) {
-            return List.of();
+            return getMovesKingHorsey(board, myPosition, true);
         }else if (piece.getPieceType() == PieceType.ROOK) {
             return getMoves(board, myPosition, false, true);
         }else if (piece.getPieceType() == PieceType.PAWN) {
-            return List.of();
+            return getMovesPawn(board, myPosition);
         }
         else {
             return List.of();
