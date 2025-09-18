@@ -49,6 +49,7 @@ public class ChessPiece {
 
             // will continue to go in the same direction until it is out of bounds or hits another piece
             while (currentRow >= 1 && currentRow <=8 && currentCol >= 1 && currentCol <=8 ) {
+                // function returns true if piece runs into another piece (forcing it to stop)
                 if (moveIterate(board, myPosition, possibleMoves, currentRow, currentCol)) {
                     break;
                 }
@@ -77,10 +78,13 @@ public class ChessPiece {
             int currentRow = myPosition.getRow() + direction[0];
             int currentCol = myPosition.getColumn() + direction[1];
 
-            // will continue to go in the same direction until it is out of bounds or hits another piece
-            if (moveIterate(board, myPosition, possibleMoves, currentRow, currentCol)) {
-                break;
+            // make sure move is in bounds
+            if ((currentRow > 8 || currentRow < 1) || (currentCol > 8 || currentCol < 1)) {
+                continue;
             }
+
+            // will continue to go in the same direction until it is out of bounds or hits another piece
+            moveIterate(board, myPosition, possibleMoves, currentRow, currentCol);
         }
         return possibleMoves;
     }
