@@ -87,31 +87,64 @@ public class ChessPiece {
 
     public List<ChessMove> getMovesPawn(ChessBoard board, ChessPosition myPosition) {
         List<ChessMove> possibleMoves = new ArrayList<>();
+        ChessPiece myPiece = board.getPiece(myPosition);
 
-        int[][] directions = {{0,1}, {1,1}, {-1,1}};
+        // finding team color to see if pawn moves up or down
+        boolean black = myPiece.pieceColor == ChessGame.TeamColor.BLACK;
+        int upDown;
+        if (black) {
+            upDown = -1;
+        } else {
+            upDown = 1;
+        }
 
-        for (int[] direction : directions) {
-            ChessPosition currentPosition = new ChessPosition(myPosition.getRow() + direction[0], myPosition.getColumn() + direction[1]);
-            ChessPiece currentPiece = board.getPiece(currentPosition);
+        // check if pawn is at starting point
+        boolean atStart = (black && myPosition.getRow() == 7) || (!black && myPosition.getRow() == 2);
+        boolean promote = (!black && myPosition.getRow() == 7) || (black && myPosition.getRow() == 2);
 
-            // finding out if pawn is promotable. don't need to check edge cases since it only goes forward and once its promoted it turns to a new piece with boundaries.
-            boolean promote = myPosition.getColumn() + 1 == 8;
-
-            // if pawn is moving diagonal
-            if (currentPiece != null && direction[0] != 0) {
-                if (!promote) {
-                    possibleMoves.add(new ChessMove(myPosition, currentPosition, null));
-                } else {
-                    possibleMoves.add(new ChessMove(myPosition, currentPosition, PieceType.QUEEN));
-                }
+        // checking for valid moves in diagonal direction
+        for (int i = -1; i <= 1; i = i + 2) {
+            // checking for illegal horizontal moves
+            if (myPosition.getColumn() + i < 1 || myPosition.getColumn() + i > 8) {
+                continue; // Skip invalid diagonal moves
             }
 
-            // if pawn is moving forward
-            if (currentPiece == null && direction[0] == 0) {
-                if (!promote) {
-                    possibleMoves.add(new ChessMove(myPosition, currentPosition, null));
-                } else {
+            // finding the current position of potential move and if any pieces are on it
+            ChessPosition currentPosition = new ChessPosition(myPosition.getRow() + upDown, myPosition.getColumn() + i);
+            ChessPiece currentPiece = board.getPiece(currentPosition);
+
+            // if pawn is moving diagonal it must be taking enemy piece
+            if (currentPiece != null && currentPiece.pieceColor != myPiece.pieceColor) {
+                if (promote) {
                     possibleMoves.add(new ChessMove(myPosition, currentPosition, PieceType.QUEEN));
+                    possibleMoves.add(new ChessMove(myPosition, currentPosition, PieceType.ROOK));
+                    possibleMoves.add(new ChessMove(myPosition, currentPosition, PieceType.BISHOP));
+                    possibleMoves.add(new ChessMove(myPosition, currentPosition, PieceType.KNIGHT));
+                } else {
+                    possibleMoves.add(new ChessMove(myPosition, currentPosition, null));
+                }
+            }
+        }
+
+        int cap;
+        if (atStart) { cap = 2; } else { cap = 1; }
+
+        // checking for valid moves going forward
+        for (int i = 1; i <= cap; i++) {
+            ChessPosition currentPosition = new ChessPosition(myPosition.getRow() + upDown*i, myPosition.getColumn());
+            ChessPiece currentPiece = board.getPiece(currentPosition);
+
+            if (currentPiece != null) {
+                break;
+            } else {
+                if (promote) {
+                    possibleMoves.add(new ChessMove(myPosition, currentPosition, PieceType.QUEEN));
+                    possibleMoves.add(new ChessMove(myPosition, currentPosition, PieceType.ROOK));
+                    possibleMoves.add(new ChessMove(myPosition, currentPosition, PieceType.BISHOP));
+                    possibleMoves.add(new ChessMove(myPosition, currentPosition, PieceType.KNIGHT));
+                    return possibleMoves;
+                } else {
+                    possibleMoves.add(new ChessMove(myPosition, currentPosition, null));
                 }
             }
         }
