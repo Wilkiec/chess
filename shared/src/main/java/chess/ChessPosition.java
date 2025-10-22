@@ -40,15 +40,14 @@ public class ChessPosition {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (!(o instanceof ChessPosition that)) {
-            return false;
-        }
-        return row == that.row && col == that.col;
+    public int hashCode() {
+        return Objects.hash(row, col);
     }
 
     @Override
-    public int hashCode() {
-        return Objects.hash(row, col);
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof ChessPosition other)) return false;
+        return row == other.row && col == other.col;
     }
 }
