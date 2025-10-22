@@ -45,8 +45,9 @@ public class ChessGame {
 
     private Collection<ChessPosition> kingCheck(ChessBoard gameBoard, ChessPosition kingPosition, TeamColor color) {
         Collection<ChessPosition> enemyPos = new ArrayList<>();
-        for (int row = 1; row <= 8; row++) {
-            for (int col = 1; col <= 8; col++) {
+        for (int i = 0; i < 64; i++) {
+            int row = (i / 8) + 1;
+            int col = (i % 8) + 1;
                 ChessPiece currentPiece = gameBoard.getPiece(new ChessPosition(row, col));
                 if (currentPiece != null && currentPiece.getTeamColor() != color) {
                     Collection<ChessMove> enemyMoves = currentPiece.pieceMoves(gameBoard, new ChessPosition(row, col));
@@ -56,7 +57,7 @@ public class ChessGame {
                         }
                     }
                 }
-            }
+
         }
         return enemyPos;
     }
@@ -176,10 +177,10 @@ public class ChessGame {
      */
     public boolean isInCheckmate(TeamColor teamColor) {
         // iterate through and if every piece of team color has no moves, checkmate is accomplished
-        return Iterate(teamColor);
+        return iterate(teamColor);
     }
 
-    private boolean Iterate(TeamColor teamColor) {
+    private boolean iterate(TeamColor teamColor) {
         for (int row = 1; row <= 8; row++) {
             for (int col = 1; col <= 8; col++) {
                 ChessPiece currentPiece = gameBoard.getPiece(new ChessPosition(row, col));
@@ -206,7 +207,7 @@ public class ChessGame {
         }
 
         // iterate through and if every piece of team color has no moves, checkmate is accomplished
-        return Iterate(teamColor);
+        return iterate(teamColor);
     }
 
     /**
