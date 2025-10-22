@@ -1,44 +1,44 @@
 package dataaccess;
 
-import model.userData;
+import model.UserData;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class userDataDAO {
-    private static final Map<String, userData> users = new HashMap<>();
+public class UserDataDAO {
+    private static final Map<String, UserData> Users = new HashMap<>();
 
     public static void clearData() {
-        users.clear();
+        Users.clear();
     }
 
     public static void createUser(String username, String email, String password) throws BadRequestException {
-        if (users.containsKey(username)) {
+        if (Users.containsKey(username)) {
             throw new AlreadyTakenException("already taken");
         }
         if (username == null || username.isBlank() || email == null ||
                 email.isBlank() || password == null || password.isBlank()) {
             throw new BadRequestException("bad request");
         }
-        users.put(username, new userData(username, email, password));
+        Users.put(username, new UserData(username, email, password));
     }
 
     public static boolean isEmpty() {
-        return users.isEmpty();
+        return Users.isEmpty();
     }
 
     public static boolean exists(String username) {
-        return users.containsKey(username);
+        return Users.containsKey(username);
     }
 
     public static void authorizedLogin(String username, String password) {
         if (username == null || username.isBlank() || password == null || password.isBlank()) {
             throw new BadRequestException("bad request");
         }
-        if (!userDataDAO.exists(username)) {
+        if (!UserDataDAO.exists(username)) {
             throw new NotAuthorizedException("unauthorized");
         }
-        if (!users.get(username).password().equals(password)) {
+        if (!Users.get(username).password().equals(password)) {
             throw new NotAuthorizedException("unauthorized");
         }
     }

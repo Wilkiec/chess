@@ -1,13 +1,13 @@
 package service;
 
 import dataaccess.NotAuthorizedException;
-import dataaccess.authDataDAO;
+import dataaccess.AuthDataDAO;
 
 public class Logout {
     public static void logout(String token) {
-        if (!authDataDAO.containsToken(token)) {
+        if (!AuthDataDAO.containsToken(token)) {
             throw new NotAuthorizedException("not authorized");
         }
-        authDataDAO.removeAuthData(token);
+        AuthDataDAO.removeAuthData(token);
     }
 }

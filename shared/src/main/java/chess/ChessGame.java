@@ -51,7 +51,9 @@ public class ChessGame {
                 if (currentPiece != null && currentPiece.getTeamColor() != color) {
                     Collection<ChessMove> enemyMoves = currentPiece.pieceMoves(gameBoard, new ChessPosition(row, col));
                     for (ChessMove enemyMove: enemyMoves) {
-                        if (enemyMove.getEndPosition().equals(kingPosition)) enemyPos.add(enemyMove.getStartPosition());
+                        if (enemyMove.getEndPosition().equals(kingPosition)) {
+                            enemyPos.add(enemyMove.getStartPosition());
+                        }
                     }
                 }
             }
@@ -122,14 +124,20 @@ public class ChessGame {
         ChessPiece piece = gameBoard.getPiece(move.getStartPosition());
 
         // confirming there is a piece at the start position
-        if (piece == null) throw new InvalidMoveException("There is no piece at given start position");
+        if (piece == null) {
+            throw new InvalidMoveException("There is no piece at given start position");
+        }
 
         // making sure it is this teams turn
-        if (getTeamTurn() != piece.getTeamColor()) throw new InvalidMoveException("Not this team's turn");
+        if (getTeamTurn() != piece.getTeamColor()) {
+            throw new InvalidMoveException("Not this team's turn");
+        }
 
         // making sure the move is valid
         Collection<ChessMove> validMoves = validMoves(move.getStartPosition());
-        if (!validMoves.contains(move)) throw new InvalidMoveException("Invalid move");
+        if (!validMoves.contains(move)) {
+            throw new InvalidMoveException("Invalid move");
+        }
 
         // checking for pawn promotion
         if (move.getPromotionPiece() != null) {
@@ -142,8 +150,12 @@ public class ChessGame {
         }
 
         // making it so it is the other team's turn now
-        if (piece.getTeamColor() == TeamColor.WHITE) setTeamTurn(TeamColor.BLACK);
-        else setTeamTurn(TeamColor.WHITE);
+        if (piece.getTeamColor() == TeamColor.WHITE) {
+            setTeamTurn(TeamColor.BLACK);
+        }
+        else {
+            setTeamTurn(TeamColor.WHITE);
+        }
     }
 
     /**
@@ -164,11 +176,17 @@ public class ChessGame {
      */
     public boolean isInCheckmate(TeamColor teamColor) {
         // iterate through and if every piece of team color has no moves, checkmate is accomplished
+        return Iterate(teamColor);
+    }
+
+    private boolean Iterate(TeamColor teamColor) {
         for (int row = 1; row <= 8; row++) {
             for (int col = 1; col <= 8; col++) {
                 ChessPiece currentPiece = gameBoard.getPiece(new ChessPosition(row, col));
                 if (currentPiece != null && currentPiece.getTeamColor() == teamColor) {
-                    if (!validMoves(new ChessPosition(row, col)).isEmpty()) return false;
+                    if (!validMoves(new ChessPosition(row, col)).isEmpty()) {
+                        return false;
+                    }
                 }
             }
         }
@@ -183,18 +201,12 @@ public class ChessGame {
      * @return True if the specified team is in stalemate, otherwise false
      */
     public boolean isInStalemate(TeamColor teamColor) {
-        if (isInCheck(teamColor)) return false;
+        if (isInCheck(teamColor)) {
+            return false;
+        }
 
         // iterate through and if every piece of team color has no moves, checkmate is accomplished
-        for (int row = 1; row <= 8; row++) {
-            for (int col = 1; col <= 8; col++) {
-                ChessPiece currentPiece = gameBoard.getPiece(new ChessPosition(row, col));
-                if (currentPiece != null && currentPiece.getTeamColor() == teamColor) {
-                    if (!validMoves(new ChessPosition(row, col)).isEmpty()) return false;
-                }
-            }
-        }
-        return true;
+        return Iterate(teamColor);
     }
 
     /**

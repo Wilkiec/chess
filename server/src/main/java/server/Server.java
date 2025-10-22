@@ -1,6 +1,5 @@
 package server;
 
-import chess.ChessGame;
 import com.google.gson.Gson;
 import dataaccess.AlreadyTakenException;
 import dataaccess.BadRequestException;
@@ -43,7 +42,7 @@ public class Server {
         javalin = Javalin.create(config -> config.staticFiles.add("web"));
         this.javalin.delete("/db", ctx -> {
             try {
-                clear.clearApp();
+                Clear.clearApp();
                 ctx.status(200);
             } catch (Exception e) {
                 sendJsonResponse(ctx, new ErrorResponse(e.getMessage()), 500);
@@ -53,7 +52,7 @@ public class Server {
         javalin.post("/user", ctx -> {
             try {
                 RegReq request = new Gson().fromJson(ctx.body(), RegReq.class);
-                authData authDat = registration.register(request.username(), request.password(), request.email());
+                AuthData authDat = Registration.register(request.username(), request.password(), request.email());
                 ctx.status(200);
                 Gson gson = new Gson();
                 String jsonString = gson.toJson(authDat);
@@ -71,7 +70,7 @@ public class Server {
         javalin.post("/session", ctx -> {
             try {
                 LoginRequired userInf = new Gson().fromJson(ctx.body(), LoginRequired.class);
-                authData authDat = Login.login(userInf.username(), userInf.password());
+                AuthData authDat = Login.login(userInf.username(), userInf.password());
                 ctx.status(200);
                 Gson gson = new Gson();
                 String jsonString = gson.toJson(authDat);
@@ -101,7 +100,7 @@ public class Server {
         javalin.get("/game", ctx -> {
             try {
                 String authToken = ctx.header("authorization");
-                List<gameDataList> game = games.getGames(authToken);
+                List<GameDataList> game = Games.getGames(authToken);
                 ctx.status(200);
                 GameListResponse response = new GameListResponse(game);
                 Gson gson = new Gson();
@@ -119,7 +118,7 @@ public class Server {
             try {
                 GameMakeRequired gameInfo = new Gson().fromJson(ctx.body(), GameMakeRequired.class);
                 String authToken = ctx.header("authorization");
-                int gameID = games.makeGame(gameInfo.gameName(), authToken);
+                int gameID = Games.makeGame(gameInfo.gameName(), authToken);
                 ctx.status(200);
                 Gson gson = new Gson();
                 String jString = gson.toJson(Map.of("gameID", String.valueOf(gameID)));
@@ -139,7 +138,7 @@ public class Server {
                 GameJoinRequired gameInfo = new Gson().fromJson(ctx.body(), GameJoinRequired.class);
                 String authToken = ctx.header("authorization");
 
-                games.joinGame(gameInfo.gameID(), gameInfo.playerColor(), authToken);
+                Games.joinGame(gameInfo.gameID(), gameInfo.playerColor(), authToken);
                 ctx.status(200);
             } catch (BadRequestException e) {
                 sendJsonResponse(ctx, new ErrorResponse(e.getMessage()), 400);

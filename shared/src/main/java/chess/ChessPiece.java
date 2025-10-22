@@ -12,7 +12,6 @@ import java.util.Objects;
  * signature of the existing methods.
  */
 public class ChessPiece {
-
     private final ChessGame.TeamColor pieceColor;
     private final PieceType type;
 
@@ -169,7 +168,9 @@ public class ChessPiece {
         }
 
         int cap = 1;
-        if ((white && myPosition.getRow() == 2) || (!white && myPosition.getRow() == 7)) cap = 2;
+        if ((white && myPosition.getRow() == 2) || (!white && myPosition.getRow() == 7)) {
+            cap = 2;
+        }
 
         for (int i = 1; i <= cap; i++) {
             currentRow = myPosition.getRow() + upDown * i;

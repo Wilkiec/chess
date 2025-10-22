@@ -1,38 +1,38 @@
 package dataaccess;
 
-import model.authData;
+import model.AuthData;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-public class authDataDAO {
-    private static final Map<String, authData> auths = new HashMap<>();
+public class AuthDataDAO {
+    private static final Map<String, AuthData> Auths = new HashMap<>();
 
     public static void clearData() {
-        auths.clear();
+        Auths.clear();
     }
 
-    public static authData generateAuthData(String username) {
+    public static AuthData generateAuthData(String username) {
         String newToken = UUID.randomUUID().toString();
-        auths.put(newToken, new authData(newToken, username));
-        return auths.get(newToken);
+        Auths.put(newToken, new AuthData(newToken, username));
+        return Auths.get(newToken);
     }
 
     public static String usernameOfAuthToken(String authToken) {
-        return auths.get(authToken).username();
+        return Auths.get(authToken).username();
     }
 
     public static void removeAuthData(String token) {
-        auths.remove(token);
+        Auths.remove(token);
     }
 
     public static boolean containsToken(String token) {
-        return auths.containsKey(token);
+        return Auths.containsKey(token);
     }
 
     public static boolean containsUsername(String username) {
-        for (authData data : auths.values()) {
+        for (AuthData data : Auths.values()) {
             if (data.username().equals(username)) {
                 return true;
             }
@@ -41,6 +41,6 @@ public class authDataDAO {
     }
 
     public static boolean isEmpty() {
-        return auths.isEmpty();
+        return Auths.isEmpty();
     }
 }
