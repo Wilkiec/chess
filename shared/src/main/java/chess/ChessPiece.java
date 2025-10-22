@@ -14,6 +14,7 @@ import java.util.Objects;
 public class ChessPiece {
     private final ChessGame.TeamColor pieceColor;
     private final PieceType type;
+    private final int[][] allDirect = new int[][] {{1,0},{0,-1},{-1,0},{0,1},{1,1},{1,-1},{-1,1},{-1,-1}};
 
     public ChessPiece(ChessGame.TeamColor pieceColor, PieceType type) {
         this.pieceColor = pieceColor;
@@ -56,7 +57,7 @@ public class ChessPiece {
         } else if (!diagonal && vertical) {
             directions = new int[][] {{1,0},{0,-1},{-1,0},{0,1}};
         } else if (vertical) {
-            directions = new int[][] {{1,0},{0,-1},{-1,0},{0,1},{1,1},{1,-1},{-1,1},{-1,-1}};
+            directions = allDirect;
         } else {
             return potentialMoves;
         }
@@ -96,7 +97,7 @@ public class ChessPiece {
 
         int[][] directions;
         if (king) {
-            directions = new int[][] {{1,0},{0,-1},{-1,0},{0,1},{1,1},{1,-1},{-1,1},{-1,-1}};
+            directions = allDirect;
         } else {
             directions = new int[][] {{1,2},{1,-2},{-1,2},{-1,-2},{2,1}, {2,-1},{-2,1},{-2,-1}};
         }
