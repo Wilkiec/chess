@@ -44,9 +44,7 @@ public class Server {
             try {
                 Clear.clearApp();
                 ctx.status(200);
-            } catch (Exception e) {
-                sendJsonResponse(ctx, new ErrorResponse(e.getMessage()), 500);
-            }
+            } catch (Exception e) {sendJsonResponse(ctx, new ErrorResponse(e.getMessage()), 500);}
         });
 
         javalin.post("/user", ctx -> {
@@ -58,13 +56,9 @@ public class Server {
                 String jsonString = gson.toJson(authDat);
                 ctx.result(jsonString);
                 ctx.contentType("application/json");
-            } catch (AlreadyTakenException e) {
-                sendJsonResponse(ctx, new ErrorResponse(e.getMessage()), 403);
-            } catch (BadRequestException e) {
-                sendJsonResponse(ctx, new ErrorResponse(e.getMessage()), 400);
-            } catch (Exception e) {
-                sendJsonResponse(ctx, new ErrorResponse(e.getMessage()), 500);
-            }
+            } catch (AlreadyTakenException e) {sendJsonResponse(ctx, new ErrorResponse(e.getMessage()), 403);}
+            catch (BadRequestException e) {sendJsonResponse(ctx, new ErrorResponse(e.getMessage()), 400);}
+            catch (Exception e) {sendJsonResponse(ctx, new ErrorResponse(e.getMessage()), 500);}
         });
 
         javalin.post("/session", ctx -> {
@@ -76,13 +70,9 @@ public class Server {
                 String jsonString = gson.toJson(authDat);
                 ctx.result(jsonString);
                 ctx.contentType("application/json");
-            } catch (BadRequestException e) {
-                sendJsonResponse(ctx, new ErrorResponse(e.getMessage()), 400);
-            } catch (NotAuthorizedException e) {
-                sendJsonResponse(ctx, new ErrorResponse(e.getMessage()), 401);
-            } catch (Exception e) {
-                sendJsonResponse(ctx, new ErrorResponse(e.getMessage()), 500);
-            }
+            } catch (BadRequestException e) {sendJsonResponse(ctx, new ErrorResponse(e.getMessage()), 400);}
+            catch (NotAuthorizedException e) {sendJsonResponse(ctx, new ErrorResponse(e.getMessage()), 401);}
+            catch (Exception e) {sendJsonResponse(ctx, new ErrorResponse(e.getMessage()), 500);}
         });
 
         javalin.delete("/session", ctx -> {
@@ -90,11 +80,8 @@ public class Server {
                 String authToken = ctx.header("authorization");
                 Logout.logout(authToken);
                 ctx.status(200);
-            } catch (NotAuthorizedException e) {
-                sendJsonResponse(ctx, new ErrorResponse(e.getMessage()), 401);
-            } catch (Exception e) {
-                sendJsonResponse(ctx, new ErrorResponse(e.getMessage()), 500);
-            }
+            } catch (NotAuthorizedException e) {sendJsonResponse(ctx, new ErrorResponse(e.getMessage()), 401);}
+            catch (Exception e) {sendJsonResponse(ctx, new ErrorResponse(e.getMessage()), 500);}
         });
 
         javalin.get("/game", ctx -> {
@@ -107,11 +94,8 @@ public class Server {
                 String jString = gson.toJson(response);
                 ctx.result(jString);
                 ctx.contentType("application/json");
-            } catch (NotAuthorizedException e) {
-                sendJsonResponse(ctx, new ErrorResponse(e.getMessage()), 401);
-            } catch (Exception e) {
-                sendJsonResponse(ctx, new ErrorResponse(e.getMessage()), 500);
-            }
+            } catch (NotAuthorizedException e) {sendJsonResponse(ctx, new ErrorResponse(e.getMessage()), 401);}
+            catch (Exception e) {sendJsonResponse(ctx, new ErrorResponse(e.getMessage()), 500);}
         });
 
         javalin.post("/game", ctx -> {
@@ -124,13 +108,9 @@ public class Server {
                 String jString = gson.toJson(Map.of("gameID", String.valueOf(gameID)));
                 ctx.result(jString);
                 ctx.contentType("application/json");
-            } catch (BadRequestException e) {
-                sendJsonResponse(ctx, new ErrorResponse(e.getMessage()), 400);
-            } catch (NotAuthorizedException e) {
-                sendJsonResponse(ctx, new ErrorResponse(e.getMessage()), 401);
-            } catch (Exception e) {
-                sendJsonResponse(ctx, new ErrorResponse(e.getMessage()), 500);
-            }
+            } catch (BadRequestException e) {sendJsonResponse(ctx, new ErrorResponse(e.getMessage()), 400);}
+            catch (NotAuthorizedException e) {sendJsonResponse(ctx, new ErrorResponse(e.getMessage()), 401);}
+            catch (Exception e) {sendJsonResponse(ctx, new ErrorResponse(e.getMessage()), 500);}
         });
 
         javalin.put("/game", ctx -> {
@@ -140,15 +120,10 @@ public class Server {
 
                 Games.joinGame(gameInfo.gameID(), gameInfo.playerColor(), authToken);
                 ctx.status(200);
-            } catch (BadRequestException e) {
-                sendJsonResponse(ctx, new ErrorResponse(e.getMessage()), 400);
-            } catch (NotAuthorizedException e) {
-                sendJsonResponse(ctx, new ErrorResponse(e.getMessage()), 401);
-            } catch (AlreadyTakenException e) {
-                sendJsonResponse(ctx, new ErrorResponse(e.getMessage()), 403);
-            } catch (Exception e) {
-                sendJsonResponse(ctx, new ErrorResponse(e.getMessage()), 500);
-            }
+            } catch (BadRequestException e) {sendJsonResponse(ctx, new ErrorResponse(e.getMessage()), 400);}
+            catch (NotAuthorizedException e) {sendJsonResponse(ctx, new ErrorResponse(e.getMessage()), 401);}
+            catch (AlreadyTakenException e) {sendJsonResponse(ctx, new ErrorResponse(e.getMessage()), 403);}
+            catch (Exception e) {sendJsonResponse(ctx, new ErrorResponse(e.getMessage()), 500);}
         });
     }
 

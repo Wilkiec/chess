@@ -153,15 +153,14 @@ public class ChessPiece {
                 currentPiece = board.getPiece(currentPosition);
 
                 if (currentPiece != null) {
-                    if (currentPiece.getTeamColor() != myPiece.getTeamColor()) {
-                        if ((currentRow == 8 && white) || (currentRow == 1 && !white)) {
-                            potentialMoves.add(new ChessMove(myPosition, currentPosition, PieceType.QUEEN));
-                            potentialMoves.add(new ChessMove(myPosition, currentPosition, PieceType.ROOK));
-                            potentialMoves.add(new ChessMove(myPosition, currentPosition, PieceType.BISHOP));
-                            potentialMoves.add(new ChessMove(myPosition, currentPosition, PieceType.KNIGHT));
-                        } else {
-                            potentialMoves.add(new ChessMove(myPosition, currentPosition, null));
-                        }
+                    if ((currentRow == 8 && white) || (currentRow == 1 && !white) && (currentPiece.getTeamColor() != myPiece.getTeamColor())) {
+                        potentialMoves.add(new ChessMove(myPosition, currentPosition, PieceType.QUEEN));
+                        potentialMoves.add(new ChessMove(myPosition, currentPosition, PieceType.ROOK));
+                        potentialMoves.add(new ChessMove(myPosition, currentPosition, PieceType.BISHOP));
+                        potentialMoves.add(new ChessMove(myPosition, currentPosition, PieceType.KNIGHT));
+
+                    } else if ((currentPiece.getTeamColor() != myPiece.getTeamColor())) {
+                        potentialMoves.add(new ChessMove(myPosition, currentPosition, null));
                     }
                 }
             }
