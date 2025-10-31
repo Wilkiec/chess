@@ -4,6 +4,7 @@ import chess.ChessGame;
 import dataaccess.*;
 import model.AuthData;
 import model.GameDataList;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,11 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 
 public class ServiceUnitTests {
+    @BeforeAll
+    public static void makeDataBase() throws DataAccessException {
+        DatabaseManager.createDatabase();
+    }
+
     @BeforeEach
     public void clearData() throws Exception, DataAccessException {
         Clear.clearApp();

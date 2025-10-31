@@ -30,14 +30,14 @@ public class DatabaseManager {
 
         String createGameDataSql = """
                 CREATE TABLE IF NOT EXISTS gameData (
-                    gameID INT PRIMARY KEY AUTO_INCREMENT,
+                    gameID INT NOT NULL,
                     usernameWhite VARCHAR(255),
                     usernameBlack VARCHAR(255),
-                    gameName VARCHAR(255) NOT NULL
+                    gameName VARCHAR(255) NOT NULL,
                     chessGame TEXT
                 );
                 """;
-        var dbConnectionUrl = connectionUrl + databaseName;
+        var dbConnectionUrl = connectionUrl + "/" + databaseName;
         try (var conn = DriverManager.getConnection(dbConnectionUrl, dbUsername, dbPassword);
              var preparedStatement = conn.prepareStatement(createGameDataSql)) {
             preparedStatement.executeUpdate();

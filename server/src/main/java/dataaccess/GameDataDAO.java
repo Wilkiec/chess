@@ -1,7 +1,7 @@
 package dataaccess;
 
 import chess.ChessGame;
-import model.GameData;
+import com.google.gson.Gson;
 import model.GameDataList;
 
 import java.sql.Connection;
@@ -10,8 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class GameDataDAO extends DatabaseManager {
-    private static final List<GameData> GAMES = new ArrayList<>();
-    private static final List<GameDataList> GAMIES = new ArrayList<>();
     private static int gameIdentify = 1000;
 
     public static void clearData() throws Exception, DataAccessException {
@@ -58,19 +56,24 @@ public class GameDataDAO extends DatabaseManager {
     }
 
     public static int createGame(String gameName) {
-        String sqlScript = "SELECT 1 FROM gameData WHERE gameName = " + gameName;
-        String insertGameName = "INSERT INTO gameData (gameID, gameName) VALUES (?, ?)";
+        String gameNameAlrExist = "SELECT 1 FROM gameData WHERE gameName = " + gameName;
+        String insertGameName = "INSERT INTO gameData (gameID, gameName, chessGame) VALUES (?, ?, ?)";
 
         try (var conn = DatabaseManager.getConnection()) {
-            var preparedStatement = conn.prepareStatement(sqlScript);
+            var preparedStatement = conn.prepareStatement(gameNameAlrExist);
             var rs = preparedStatement.executeQuery();
             if (rs.next()) {
                 throw new BadRequestException("bad request");
             }
             int uniqueId = gameIdentify++;
             var ps = conn.prepareStatement(insertGameName);
+
+            // turning chessGame into JSON.
+            var serializer = new Gson();
+            var chessGameJSON = serializer.toJson(new ChessGame());
             ps.setString(1, gameName);
             ps.setInt(2, uniqueId);
+            ps.setString(3, chessGameJSON);
             ps.executeUpdate();
             return uniqueId;
         } catch (SQLException | DataAccessException e) {
@@ -79,29 +82,27 @@ public class GameDataDAO extends DatabaseManager {
     }
 
     public static void joinGame(int gameID, ChessGame.TeamColor teamColor, String username) {
-        int check = 1;
-        for (int i = 0; i < GAMES.size(); i++) {
-            if (GAMES.get(i).gameID() == gameID) {
-                GameData current = GAMES.get(i);
-                check = 0;
-                if (teamColor == ChessGame.TeamColor.BLACK) {
-                    if (current.blackUsername() != null) {
-                        throw new AlreadyTakenException("already taken");
-                    }
-                    GAMIES.set(i, new GameDataList(current.gameID(), current.whiteUsername(), username, current.gameName()));
-                    GAMES.set(i, new GameData(current.gameID(), current.whiteUsername(), username, current.gameName(), current.game()));
-                } else {
-                    if (current.whiteUsername() != null) {
-                        throw new AlreadyTakenException("already taken");
-                    }
-                    GAMIES.set(i, new GameDataList(current.gameID(), username, current.blackUsername(), current.gameName()));
-                    GAMES.set(i, new GameData(current.gameID(), username, current.blackUsername(), current.gameName(), current.game()));
-                }
-                break;
-            }
+        String gameIdExist = "SELECT 1 FROM gameData WHERE gameID = " + gameID;
+
+        String insertGameName;
+        insertGameName = "UPDATE gameData SET usernameWhite = ? WHERE gameID = ?";
+        if (teamColor == ChessGame.TeamColor.BLACK) {
+            insertGameName = "UPDATE gameData SET usernameBlack = ? WHERE gameID = ?";
         }
-        if (check == 1) {
-            throw new BadRequestException("bad request");
+
+        try (var conn = DatabaseManager.getConnection()) {
+            // checking to make sure the game has been created and not trying to join a non existant game
+            var preparedStatement = conn.prepareStatement(gameIdExist);
+            var rs = preparedStatement.executeQuery();
+            if (rs.next()) {
+                throw new BadRequestException("bad request");
+            }
+
+            // inserting username into the specific team color
+            preparedStatement = conn.prepareStatement(insertGameName);
+            preparedStatement.executeUpdate();
+        } catch (SQLException | DataAccessException e) {
+            throw new RuntimeException(e);
         }
     }
 }
