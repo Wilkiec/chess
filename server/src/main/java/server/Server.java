@@ -3,6 +3,7 @@ package server;
 import com.google.gson.Gson;
 import dataaccess.AlreadyTakenException;
 import dataaccess.BadRequestException;
+import dataaccess.DataAccessException;
 import dataaccess.NotAuthorizedException;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
@@ -44,7 +45,7 @@ public class Server {
             try {
                 Clear.clearApp();
                 ctx.status(200);
-            } catch (Exception e) {sendJsonResponse(ctx, new ErrorResponse(e.getMessage()), 500);}
+            } catch (Exception | DataAccessException e) {sendJsonResponse(ctx, new ErrorResponse(e.getMessage()), 500);}
         });
 
         javalin.post("/user", ctx -> {

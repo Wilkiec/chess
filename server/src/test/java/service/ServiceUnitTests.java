@@ -14,12 +14,12 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class ServiceUnitTests {
     @BeforeEach
-    public void clearData() {
+    public void clearData() throws Exception, DataAccessException {
         Clear.clearApp();
     }
 
     @Test
-    public void clearPositiveServiceTest() {
+    public void clearPositiveServiceTest() throws Exception, DataAccessException {
         Registration.register("wilkiec", "corben.wilkie55@gmail.com", "12345");
         Clear.clearApp();
 

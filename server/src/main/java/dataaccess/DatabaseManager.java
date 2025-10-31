@@ -27,6 +27,23 @@ public class DatabaseManager {
         } catch (SQLException ex) {
             throw new DataAccessException("failed to create database", ex);
         }
+
+        String createGameDataSql = """
+                CREATE TABLE IF NOT EXISTS gameData (
+                    gameID INT PRIMARY KEY AUTO_INCREMENT,
+                    usernameWhite VARCHAR(255),
+                    usernameBlack VARCHAR(255),
+                    gameName VARCHAR(255) NOT NULL
+                    chessGame TEXT
+                );
+                """;
+        var dbConnectionUrl = connectionUrl + databaseName;
+        try (var conn = DriverManager.getConnection(dbConnectionUrl, dbUsername, dbPassword);
+             var preparedStatement = conn.prepareStatement(createGameDataSql)) {
+            preparedStatement.executeUpdate();
+        } catch (SQLException ex) {
+            throw new DataAccessException("Failed to create table 'gameData': " + ex.getMessage(), ex);
+        }
     }
 
     /**
@@ -40,6 +57,8 @@ public class DatabaseManager {
      * // execute SQL statements.
      * }
      * </code>
+     *
+     * @return
      */
     static Connection getConnection() throws DataAccessException {
         try {
