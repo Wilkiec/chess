@@ -21,9 +21,10 @@ public class DatabaseManager {
      */
     static public void createDatabase() throws DataAccessException {
         var statement = "CREATE DATABASE IF NOT EXISTS " + databaseName;
-        try (var conn = DriverManager.getConnection(connectionUrl, dbUsername, dbPassword);
-             var preparedStatement = conn.prepareStatement(statement)) {
-            preparedStatement.executeUpdate();
+        try (var conn = DriverManager.getConnection(connectionUrl, dbUsername, dbPassword)) {
+            try (var preparedStatement = conn.prepareStatement(statement) ) {
+                preparedStatement.executeUpdate();
+            }
         } catch (SQLException ex) {
             throw new DataAccessException("failed to create database", ex);
         }
@@ -37,9 +38,38 @@ public class DatabaseManager {
                     chessGame TEXT
                 );
                 """;
+
+        String createUserDataSql = """
+                CREATE TABLE IF NOT EXISTS userData (
+                    username VARCHAR(255) NOT NULL,
+                    email VARCHAR(255) NOT NULL,
+                    password VARCHAR(255) NOT NULL
+                );
+                """;
+
         var dbConnectionUrl = connectionUrl + "/" + databaseName;
+        try (var conn = DriverManager.getConnection(dbConnectionUrl, dbUsername, dbPassword)) {
+            // creating gameDataTable
+            try (var preparedStatement = conn.prepareStatement(createGameDataSql)) {
+                preparedStatement.executeUpdate();
+            } catch (SQLException ex) {
+                throw new DataAccessException("Failed to create table 'gameData': " + ex.getMessage(), ex);
+            }
+
+            // creating userDataTable
+            try (var preparedStatement = conn.prepareStatement(createUserDataSql)) {
+                preparedStatement.executeUpdate();
+            } catch (SQLException ex) {
+                throw new DataAccessException("Failed to create table 'userData': " + ex.getMessage(), ex);
+            }
+        } catch (SQLException ex) {
+            throw new DataAccessException("Failed to create connection to db" + ex.getMessage(), ex);
+        }
+
+
+
         try (var conn = DriverManager.getConnection(dbConnectionUrl, dbUsername, dbPassword);
-             var preparedStatement = conn.prepareStatement(createGameDataSql)) {
+             var preparedStatement = conn.prepareStatement(createUserDataSql)) {
             preparedStatement.executeUpdate();
         } catch (SQLException ex) {
             throw new DataAccessException("Failed to create table 'gameData': " + ex.getMessage(), ex);
@@ -58,7 +88,6 @@ public class DatabaseManager {
      * }
      * </code>
      *
-     * @return
      */
     static Connection getConnection() throws DataAccessException {
         try {

@@ -9,6 +9,8 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static dataaccess.UserDataDAO.emptySQL;
+
 public class GameDataDAO extends DatabaseManager {
     private static int gameIdentify = 1000;
 
@@ -25,17 +27,7 @@ public class GameDataDAO extends DatabaseManager {
     public static boolean isEmpty() {
         String sqlScript = "SELECT COUNT(*) FROM gameData";
 
-        try (var conn = DatabaseManager.getConnection()) {
-            var preparedStatement = conn.prepareStatement(sqlScript);
-            var rs = preparedStatement.executeQuery();
-
-            if (rs.next()) {
-                return rs.getInt(1) == 0;
-            }
-            return false;
-        } catch (SQLException | DataAccessException e) {
-            throw new RuntimeException(e);
-        }
+        return emptySQL(sqlScript);
     }
 
     public static List<GameDataList> listGames() {
