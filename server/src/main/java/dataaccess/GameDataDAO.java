@@ -38,16 +38,17 @@ public class GameDataDAO extends DatabaseManager {
 
         try (var conn = DatabaseManager.getConnection()) {
             var preparedStatement = conn.prepareStatement(sqlScript);
-            var rs = preparedStatement.executeQuery();
-            while (rs.next()) {
-                int gameID = rs.getInt("gameID");
-                String usernameW = rs.getString("usernameWhite");
-                String usernameB = rs.getString("usernameBlack");
-                String gameName = rs.getString("gameName");
+            try (var rs = preparedStatement.executeQuery()) {
+                while (rs.next()) {
+                    int gameID = rs.getInt("gameID");
+                    String usernameW = rs.getString("usernameWhite");
+                    String usernameB = rs.getString("usernameBlack");
+                    String gameName = rs.getString("gameName");
 
-                games.add(new GameDataList(gameID, usernameW, usernameB, gameName));
+                    games.add(new GameDataList(gameID, usernameW, usernameB, gameName));
+                }
+                return games;
             }
-            return games;
         } catch (SQLException | DataAccessException e) {
             throw new RuntimeException(e);
         }
@@ -100,22 +101,28 @@ public class GameDataDAO extends DatabaseManager {
             // checking to make sure the game has been created and not trying to join a non-existent game
             var preparedStatement = conn.prepareStatement(userAlrExists);
             preparedStatement.setInt(1, gameID);
-            var rs = preparedStatement.executeQuery();
-            if (!rs.next()) {
-                throw new BadRequestException("bad request");
-            }
+            try (var rs = preparedStatement.executeQuery()) {
+                if (!rs.next()) {
+                    throw new BadRequestException("bad request");
+                }
 
-            // finding out if the color user wants to join is already taken
-            String existingUsername = rs.getString(1);
-            if (existingUsername != null) {
-                throw new AlreadyTakenException("already taken");
-            }
+                // finding out if the color user wants to join is already taken
+                String existingUsername = rs.getString(1);
+                if (existingUsername != null) {
+                    throw new AlreadyTakenException("already taken");
+                }
 
-            // inserting username into the specific team color
-            preparedStatement = conn.prepareStatement(insertGameName);
-            preparedStatement.setString(1, username);
-            preparedStatement.setInt(2, gameID);
-            preparedStatement.executeUpdate();
+                // inserting username into the specific team color
+                preparedStatement = conn.prepareStatement(insertGameName);
+                preparedStatement.setString(1, username);
+                preparedStatement.setInt(2, gameID);
+
+                try {
+                    preparedStatement.executeUpdate();
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
+            }
         } catch (SQLException | DataAccessException e) {
             throw new RuntimeException(e);
         }

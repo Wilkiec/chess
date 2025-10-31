@@ -14,7 +14,11 @@ public class AuthDataDAO {
 
         try (Connection conn = DatabaseManager.getConnection()) {
             try (var preparedStatement = conn.prepareStatement(sqlScript)) {
-                preparedStatement.executeUpdate();
+                try {
+                    preparedStatement.executeUpdate();
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
             }
         } catch (SQLException | DataAccessException e) {
             throw new RuntimeException(e);
