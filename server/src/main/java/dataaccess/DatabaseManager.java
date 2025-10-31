@@ -47,6 +47,13 @@ public class DatabaseManager {
                 );
                 """;
 
+        String createAuthDataSql = """
+                CREATE TABLE IF NOT EXISTS userData (
+                    authToken VARCHAR(255) NOT NULL,
+                    username VARCHAR(255) NOT NULL
+                );
+                """;
+
         var dbConnectionUrl = connectionUrl + "/" + databaseName;
         try (var conn = DriverManager.getConnection(dbConnectionUrl, dbUsername, dbPassword)) {
             // creating gameDataTable
@@ -62,11 +69,16 @@ public class DatabaseManager {
             } catch (SQLException ex) {
                 throw new DataAccessException("Failed to create table 'userData': " + ex.getMessage(), ex);
             }
+
+            // creating authDataTable
+            try (var preparedStatement = conn.prepareStatement(createAuthDataSql)) {
+                preparedStatement.executeUpdate();
+            } catch (SQLException ex) {
+                throw new DataAccessException("Failed to create table 'userData': " + ex.getMessage(), ex);
+            }
         } catch (SQLException ex) {
             throw new DataAccessException("Failed to create connection to db" + ex.getMessage(), ex);
         }
-
-
 
         try (var conn = DriverManager.getConnection(dbConnectionUrl, dbUsername, dbPassword);
              var preparedStatement = conn.prepareStatement(createUserDataSql)) {
