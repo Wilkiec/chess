@@ -48,7 +48,7 @@ public class DatabaseManager {
                 """;
 
         String createAuthDataSql = """
-                CREATE TABLE IF NOT EXISTS userData (
+                CREATE TABLE IF NOT EXISTS authData (
                     authToken VARCHAR(255) NOT NULL,
                     username VARCHAR(255) NOT NULL
                 );

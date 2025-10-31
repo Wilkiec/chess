@@ -2,45 +2,109 @@ package dataaccess;
 
 import model.AuthData;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.UUID;
 
-public class AuthDataDAO {
-    private static final Map<String, AuthData> AUTHS = new HashMap<>();
+import static dataaccess.UserDataDAO.emptySQL;
 
+public class AuthDataDAO {
     public static void clearData() {
-        AUTHS.clear();
+        String sqlScript = "TRUNCATE TABLE authData";
+
+        try (Connection conn = DatabaseManager.getConnection()) {
+            try (var preparedStatement = conn.prepareStatement(sqlScript)) {
+                preparedStatement.executeUpdate();
+            }
+        } catch (SQLException | DataAccessException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static AuthData generateAuthData(String username) {
         String newToken = UUID.randomUUID().toString();
-        AUTHS.put(newToken, new AuthData(newToken, username));
-        return AUTHS.get(newToken);
+
+        String insertNewAuthToken = "INSERT INTO authData (authToken, username) VALUES (?, ?)";
+
+        try (var conn = DatabaseManager.getConnection()) {
+            var ps = conn.prepareStatement(insertNewAuthToken);
+            ps.setString(1, newToken);
+            ps.setString(2, username);
+            try {
+                ps.executeUpdate();
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        } catch (SQLException | DataAccessException e) {
+            throw new RuntimeException(e);
+        }
+        return new AuthData(newToken, username);
     }
 
     public static String usernameOfAuthToken(String authToken) {
-        return AUTHS.get(authToken).username();
+        String getUsername = "SELECT username From authData WHERE authToken = ?";
+
+        try (var conn = DatabaseManager.getConnection()) {
+            try (var ps = conn.prepareStatement(getUsername)) {
+                ps.setString(1, authToken);
+                try (var rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        return rs.getString(1);
+                    } else {
+                        throw new BadRequestException("No such AuthToken");
+                    }
+                }
+            }
+        } catch (SQLException | DataAccessException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static void removeAuthData(String token) {
-        AUTHS.remove(token);
+        String deleteUserAuth = "DELETE FROM authData WHERE authToken = ?";
+
+        try (var conn = DatabaseManager.getConnection()) {
+            try (var ps = conn.prepareStatement(deleteUserAuth)) {
+                ps.setString(1, token);
+                try {
+                    ps.executeUpdate();
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        } catch (SQLException | DataAccessException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static boolean containsToken(String token) {
-        return AUTHS.containsKey(token);
+        String deleteUserAuth = "SELECT * FROM authData WHERE authToken = ?";
+
+        return containsSQL(token, deleteUserAuth);
+    }
+
+    static boolean containsSQL(String token, String deleteUserAuth) {
+        try (var conn = DatabaseManager.getConnection()) {
+            try (var ps = conn.prepareStatement(deleteUserAuth)) {
+                ps.setString(1, token);
+                try (var rs = ps.executeQuery()) {
+                    return rs.next();
+                }
+            }
+        } catch (SQLException | DataAccessException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static boolean containsUsername(String username) {
-        for (AuthData data : AUTHS.values()) {
-            if (data.username().equals(username)) {
-                return true;
-            }
-        }
-        return false;
+        String deleteUserAuth = "SELECT * FROM authData WHERE username = ?";
+
+        return containsSQL(username, deleteUserAuth);
     }
 
     public static boolean isEmpty() {
-        return AUTHS.isEmpty();
+        String sqlScript = "SELECT COUNT(*) FROM authData";
+
+        return emptySQL(sqlScript);
     }
 }

@@ -5,6 +5,8 @@ import org.mindrot.jbcrypt.BCrypt;
 import java.sql.Connection;
 import java.sql.SQLException;
 
+import static dataaccess.AuthDataDAO.containsSQL;
+
 public class UserDataDAO {
     public static void clearData() {
         String sqlScript = "TRUNCATE TABLE userData";
@@ -78,16 +80,7 @@ public class UserDataDAO {
     public static boolean exists(String username) {
         String sqlScript = "SELECT username FROM userData WHERE username = ?";
 
-        try (var conn = DatabaseManager.getConnection()) {
-            try (var preparedStatement = conn.prepareStatement(sqlScript)) {
-                preparedStatement.setString(1, username);
-                try (var rs = preparedStatement.executeQuery()) {
-                    return rs.next();
-                }
-            }
-        } catch (SQLException | DataAccessException e) {
-            throw new RuntimeException(e);
-        }
+        return containsSQL(username, sqlScript);
     }
 
     public static void authorizedLogin(String username, String password) {

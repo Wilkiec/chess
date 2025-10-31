@@ -14,13 +14,15 @@ import static dataaccess.UserDataDAO.emptySQL;
 public class GameDataDAO extends DatabaseManager {
     private static int gameIdentify = 1000;
 
-    public static void clearData() throws Exception, DataAccessException {
+    public static void clearData() {
         String sqlScript = "TRUNCATE TABLE gameData";
 
         try (Connection conn = DatabaseManager.getConnection()) {
             try (var preparedStatement = conn.prepareStatement(sqlScript)) {
                 preparedStatement.executeUpdate();
             }
+        } catch (SQLException | DataAccessException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -58,10 +60,12 @@ public class GameDataDAO extends DatabaseManager {
         try (var conn = DatabaseManager.getConnection()) {
             var preparedStatement = conn.prepareStatement(gameNameAlrExist);
             preparedStatement.setString(1, gameName);
-            var rs = preparedStatement.executeQuery();
-            if (rs.next()) {
-                throw new BadRequestException("bad request");
+            try (var rs = preparedStatement.executeQuery()) {
+                if (rs.next()) {
+                    throw new BadRequestException("bad request");
+                }
             }
+
             int uniqueId = gameIdentify++;
             var ps = conn.prepareStatement(insertGameName);
 
@@ -71,8 +75,12 @@ public class GameDataDAO extends DatabaseManager {
             ps.setInt(1, uniqueId);
             ps.setString(2, gameName);
             ps.setString(3, chessGameJSON);
-            ps.executeUpdate();
-            return uniqueId;
+            try {
+                ps.executeUpdate();
+                return uniqueId;
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
         } catch (SQLException | DataAccessException e) {
             throw new RuntimeException(e);
         }
