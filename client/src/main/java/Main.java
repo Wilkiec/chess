@@ -1,4 +1,4 @@
-import websocket.Repl;
+import client.Repl;
 
 public class Main {
     public static void main(String[] args) {

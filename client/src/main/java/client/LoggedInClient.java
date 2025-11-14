@@ -1,10 +1,10 @@
-package websocket;
+package client;
 
 import chess.ChessGame;
 
 import java.util.Arrays;
 
-import static websocket.BoardDrawer.drawBoard;
+import static client.BoardDrawer.drawBoard;
 
 public class LoggedInClient implements ReplClient {
     private final ServerFacade server;

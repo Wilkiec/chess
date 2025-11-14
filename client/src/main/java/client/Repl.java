@@ -1,8 +1,8 @@
-package websocket;
+package client;
 
 import java.util.*;
 
-import static websocket.BoardDrawer.systemResetColor;
+import static client.BoardDrawer.systemResetColor;
 
 public class Repl {
     private int current = 0;
