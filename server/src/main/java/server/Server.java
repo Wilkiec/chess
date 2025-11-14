@@ -126,4 +126,8 @@ public class Server {
         javalin.start(desiredPort);
         return javalin.port();
     }
+
+    public void stop() {
+        javalin.stop();
+    }
 }
