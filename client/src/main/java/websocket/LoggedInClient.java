@@ -38,8 +38,15 @@ public class LoggedInClient implements ReplClient {
         if (params.length != 1) {
             return "Observe Command Requires 1 Input";
         }
+
         String gameId = params[0];
-        int gameIdInt = Integer.parseInt(gameId);
+
+        int gameIdInt;
+        try {
+            gameIdInt = Integer.parseInt(gameId);
+        } catch (NumberFormatException e) {
+            return "Please Provide a Valid Integer";
+        }
 
         ChessGame board = new ChessGame();
 
@@ -54,7 +61,14 @@ public class LoggedInClient implements ReplClient {
         if (params.length != 2) {
             return "Join Command Requires 2 Inputs";
         }
-        int gameId = Integer.parseInt(params[0]);
+
+        int gameId;
+        try {
+            gameId = Integer.parseInt(params[0]);
+        } catch (NumberFormatException e) {
+            return "Please Provide a Valid Integer";
+        }
+
         String color = params[1];
 
         server.joinGame(repl.authToken, gameId, color);
@@ -103,7 +117,6 @@ public class LoggedInClient implements ReplClient {
             if (game.blackUsername() != null) {
                 games.append(game.blackUsername());
             }
-            games.append(game.gameID());
             games.append("\n");
         }
 
