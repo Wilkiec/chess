@@ -14,17 +14,17 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class ServerFacadeTests {
 
-    private static String ServerUrl;
+    private static String serverUrl;
     private static Server server;
-    private static ServerFacade Facade;
+    private static ServerFacade facade;
     
     @BeforeAll
     public static void init() {
         server = new Server();
         var port = server.run(0);
         System.out.println("Started test HTTP server on " + port);
-        ServerUrl = "http://localhost:" + port;
-        Facade = new ServerFacade(ServerUrl);
+        serverUrl = "http://localhost:" + port;
+        facade = new ServerFacade(serverUrl);
     }
 
     @AfterAll
@@ -36,7 +36,7 @@ public class ServerFacadeTests {
     public void clearDatabase() {
         // This method now calls the /db endpoint to clear the database
         try {
-            URI uri = new URI(ServerUrl + "/db");
+            URI uri = new URI(serverUrl + "/db");
             HttpURLConnection http = (HttpURLConnection) uri.toURL().openConnection();
             http.setRequestMethod("DELETE");
             http.connect();
@@ -70,7 +70,7 @@ public class ServerFacadeTests {
         String email = generateUniqueEmail();
 
         Assertions.assertDoesNotThrow(() -> {
-            AuthData auth = Facade.register(username, "password123", email);
+            AuthData auth = facade.register(username, "password123", email);
             Assertions.assertNotNull(auth);
             Assertions.assertEquals(username, auth.username());
             Assertions.assertNotNull(auth.authToken());
@@ -83,10 +83,10 @@ public class ServerFacadeTests {
         String email = generateUniqueEmail();
 
         Assertions.assertDoesNotThrow(() -> {
-            Facade.register(username, "password123", email);
+            facade.register(username, "password123", email);
         });
 
-        Assertions.assertThrows(ResponseException.class, () -> Facade.register(username, "newpass", "new-email@test.com"));
+        Assertions.assertThrows(ResponseException.class, () -> facade.register(username, "newpass", "new-email@test.com"));
     }
 
     @Test
@@ -94,9 +94,9 @@ public class ServerFacadeTests {
     public void loginPositive() throws ResponseException {
         String username = generateUniqueUsername();
         String password = "myPassword";
-        Facade.register(username, password, generateUniqueEmail());
+        facade.register(username, password, generateUniqueEmail());
 
-        AuthData auth = Facade.login(username, password);
+        AuthData auth = facade.login(username, password);
         Assertions.assertNotNull(auth);
         Assertions.assertEquals(username, auth.username());
         Assertions.assertNotNull(auth.authToken());
@@ -106,60 +106,60 @@ public class ServerFacadeTests {
     public void loginNegativeWrongPassword() throws ResponseException {
         String username = generateUniqueUsername();
         String password = "myPassword";
-        Facade.register(username, password, generateUniqueEmail());
+        facade.register(username, password, generateUniqueEmail());
 
-        Assertions.assertThrows(ResponseException.class, () -> Facade.login(username, "wrongPassword"));
+        Assertions.assertThrows(ResponseException.class, () -> facade.login(username, "wrongPassword"));
     }
 
     @Test
     public void loginNegativeUserNotFound() {
-        Assertions.assertThrows(ResponseException.class, () -> Facade.login("nonExistentUser", "anyPassword"));
+        Assertions.assertThrows(ResponseException.class, () -> facade.login("nonExistentUser", "anyPassword"));
     }
 
     @Test
     public void logoutPositive() throws ResponseException {
         String username = generateUniqueUsername();
-        AuthData auth = Facade.register(username, "pass", generateUniqueEmail());
+        AuthData auth = facade.register(username, "pass", generateUniqueEmail());
 
-        Assertions.assertDoesNotThrow(() -> Facade.logout(auth.authToken()));
+        Assertions.assertDoesNotThrow(() -> facade.logout(auth.authToken()));
     }
 
     @Test
     public void logoutNegative() {
-        Assertions.assertThrows(ResponseException.class, () -> Facade.logout("this-is-a-fake-token"));
+        Assertions.assertThrows(ResponseException.class, () -> facade.logout("this-is-a-fake-token"));
     }
 
     @Test
     public void createGamePositive() throws ResponseException {
-        AuthData auth = Facade.register(generateUniqueUsername(), "pass", generateUniqueEmail());
+        AuthData auth = facade.register(generateUniqueUsername(), "pass", generateUniqueEmail());
 
-        Assertions.assertDoesNotThrow(() -> Facade.createGame(auth.authToken(), "My New Game"));
+        Assertions.assertDoesNotThrow(() -> facade.createGame(auth.authToken(), "My New Game"));
     }
 
     @Test
     public void createGameNegative() {
-        Assertions.assertThrows(ResponseException.class, () -> Facade.createGame("fake-token", "My Game"));
+        Assertions.assertThrows(ResponseException.class, () -> facade.createGame("fake-token", "My Game"));
     }
 
     @Test
     public void listGamePositive() throws ResponseException {
-        AuthData auth = Facade.register(generateUniqueUsername(), "pass", generateUniqueEmail());
-        Facade.createGame(auth.authToken(), "Game1");
-        Facade.createGame(auth.authToken(), "Game2");
+        AuthData auth = facade.register(generateUniqueUsername(), "pass", generateUniqueEmail());
+        facade.createGame(auth.authToken(), "Game1");
+        facade.createGame(auth.authToken(), "Game2");
 
-        GameListResponse response = Facade.listGame(auth.authToken());
+        GameListResponse response = facade.listGame(auth.authToken());
         Assertions.assertNotNull(response);
         Assertions.assertEquals(2, response.games().size());
     }
 
     @Test
     public void listGameNegative() {
-        Assertions.assertThrows(ResponseException.class, () -> Facade.listGame("fake-token"));
+        Assertions.assertThrows(ResponseException.class, () -> facade.listGame("fake-token"));
     }
 
     private int createAndFindGameId(String authToken, String gameName) throws ResponseException {
-        Facade.createGame(authToken, gameName);
-        GameListResponse list = Facade.listGame(authToken);
+        facade.createGame(authToken, gameName);
+        GameListResponse list = facade.listGame(authToken);
         for (GameData game : list.games()) {
             if (game.gameName().equals(gameName)) {
                 return game.gameID();
@@ -170,30 +170,30 @@ public class ServerFacadeTests {
 
     @Test
     public void joinGamePositive() throws ResponseException {
-        AuthData auth = Facade.register(generateUniqueUsername(), "pass", generateUniqueEmail());
+        AuthData auth = facade.register(generateUniqueUsername(), "pass", generateUniqueEmail());
         String gameName = "my-joinable-game";
 
         final int finalGameId = createAndFindGameId(auth.authToken(), gameName);
-        Assertions.assertDoesNotThrow(() -> Facade.joinGame(auth.authToken(), finalGameId, "white"));
+        Assertions.assertDoesNotThrow(() -> facade.joinGame(auth.authToken(), finalGameId, "white"));
     }
 
     @Test
     public void joinGameNegativeSpotTaken() throws ResponseException {
-        AuthData auth1 = Facade.register(generateUniqueUsername(), "pass1", generateUniqueEmail());
+        AuthData auth1 = facade.register(generateUniqueUsername(), "pass1", generateUniqueEmail());
         String gameName = "game-for-spot-taken-test";
         int gameId = createAndFindGameId(auth1.authToken(), gameName);
-        Facade.joinGame(auth1.authToken(), gameId, "white");
+        facade.joinGame(auth1.authToken(), gameId, "white");
 
-        AuthData auth2 = Facade.register(generateUniqueUsername(), "pass2", generateUniqueEmail());
+        AuthData auth2 = facade.register(generateUniqueUsername(), "pass2", generateUniqueEmail());
 
         final int finalGameId = gameId;
-        Assertions.assertThrows(ResponseException.class, () -> Facade.joinGame(auth2.authToken(), finalGameId, "white"));
+        Assertions.assertThrows(ResponseException.class, () -> facade.joinGame(auth2.authToken(), finalGameId, "white"));
     }
 
     @Test
     public void joinGameNegativeBadId() throws ResponseException {
-        AuthData auth = Facade.register(generateUniqueUsername(), "pass", generateUniqueEmail());
+        AuthData auth = facade.register(generateUniqueUsername(), "pass", generateUniqueEmail());
 
-        Assertions.assertThrows(ResponseException.class, () -> Facade.joinGame(auth.authToken(), 99999, "black"));
+        Assertions.assertThrows(ResponseException.class, () -> facade.joinGame(auth.authToken(), 99999, "black"));
     }
 }
