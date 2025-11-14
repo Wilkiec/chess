@@ -14,15 +14,17 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class ServerFacadeTests {
 
-    private static final String serverUrl = "http://localhost:8080";
+    private static String serverUrl;
     private static Server server;
-    private static final ServerFacade facade = new ServerFacade(serverUrl);
+    private static ServerFacade facade;
 
     @BeforeAll
     public static void init() {
         server = new Server();
         var port = server.run(0);
         System.out.println("Started test HTTP server on " + port);
+        serverUrl = "http://localhost:" + port;
+        facade = new ServerFacade(serverUrl);
     }
 
     @AfterAll
