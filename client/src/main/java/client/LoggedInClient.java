@@ -1,10 +1,6 @@
 package client;
 
-import chess.ChessGame;
-
 import java.util.Arrays;
-
-import static client.BoardDrawer.drawBoard;
 
 public class LoggedInClient implements ReplClient {
     private final ServerFacade server;
@@ -34,7 +30,7 @@ public class LoggedInClient implements ReplClient {
         }
     }
 
-    public String observeGame(String[] params) {
+    public String observeGame(String[] params) throws ResponseException {
         if (params.length != 1) {
             return "Observe Command Requires 1 Input";
         }
@@ -47,10 +43,6 @@ public class LoggedInClient implements ReplClient {
         } catch (NumberFormatException e) {
             return "Please Provide a Valid Integer";
         }
-
-        ChessGame board = new ChessGame();
-
-        drawBoard(board.getBoard(), true);
 
         repl.setInGame(gameIdInt, false, true);
 
@@ -82,11 +74,9 @@ public class LoggedInClient implements ReplClient {
             return "Must Provide A Valid Game Color";
         }
 
+        server.joinGame(repl.authToken, gameId, color);
+
         repl.setInGame(gameId, true, white);
-
-        ChessGame board = new ChessGame();
-
-        drawBoard(board.getBoard(), white);
 
         return "Successfully joined game " + gameId;
     }

@@ -1,19 +1,22 @@
 package client;
 
 import chess.ChessMove;
-import chess.ChessPiece;
 import chess.ChessPosition;
+import jakarta.websocket.DeploymentException;
+import websocket.messages.ServerMessage;
 
-import java.util.ArrayList;
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.Arrays;
-import java.util.List;
 
-public class InGameClient implements ReplClient {
+public class InGameClient implements ReplClient, ServerMessageObserver {
     private final Repl repl;
+    private final String serverUrl;
     private WebSocketFacade ws;
 
     public InGameClient(Repl repl) {
         this.repl = repl;
+        this.serverUrl = repl.serverUrl;
     }
 
     public String eval(String line) {
@@ -49,7 +52,9 @@ public class InGameClient implements ReplClient {
 
             ChessMove move = new ChessMove(startPos, endPos, null);
 
-            return ws.makeMove(repl.authToken, repl.gameId, move);
+            WebSocketFacade.makeMove(repl.authToken, repl.gameId, move);
+
+            return "move sent";
         } catch (Exception | ResponseException e) {
             return "please use a valid start and end position. Ex: move a2 a4";
         }
@@ -102,5 +107,21 @@ public class InGameClient implements ReplClient {
         }
 
         return new ChessPosition(row, col);
+    }
+
+    public void enter() {
+        try {
+            ws = new WebSocketFacade(serverUrl, this);
+
+            ws.connect(repl.authToken, repl.gameId);
+
+        } catch (DeploymentException | URISyntaxException | IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void notify(ServerMessage message) {
+
     }
 }

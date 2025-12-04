@@ -11,15 +11,16 @@ public class Repl {
     boolean player = false;
     boolean white = true;
     String authToken;
+    String serverUrl;
 
     public Repl(String serverUrl) {
         ServerFacade server = new ServerFacade(serverUrl);
-
         NotLoggedInClient client0 = new NotLoggedInClient(this, server);
         LoggedInClient client1 = new LoggedInClient(this, server);
         InGameClient client2 = new InGameClient(this);
         this.activeClient = new ArrayList<>(Arrays.asList(client0, client1, client2));
         this.authToken = "";
+        this.serverUrl = serverUrl;
     }
 
     public void run() {
@@ -56,5 +57,11 @@ public class Repl {
         this.gameId = gameId;
         this.player = player;
         this.white = white;
+
+        InGameClient gameClient = new InGameClient(this);
+
+        gameClient.enter();
+
+        this.activeClient.set(2, gameClient);
     }
 }
