@@ -1,9 +1,16 @@
 package client;
 
+import chess.ChessMove;
+import chess.ChessPiece;
+import chess.ChessPosition;
+
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class InGameClient implements ReplClient {
     private final Repl repl;
+    private WebSocketFacade ws;
 
     public InGameClient(Repl repl) {
         this.repl = repl;
@@ -29,7 +36,23 @@ public class InGameClient implements ReplClient {
     }
 
     private String makeMove(String[] params) {
-        return "";
+        // parse user input:
+        if (params.length != 2) {
+            return "please include start and end position";
+        }
+
+        try {
+            ChessPosition startPos = moveParse(params[0]);
+            ChessPosition endPos = moveParse(params[1]);
+
+            // how to tell if user needs to specify promotion piece?
+
+            ChessMove move = new ChessMove(startPos, endPos, null);
+
+            return ws.makeMove(repl.authToken, repl.gameId, move);
+        } catch (Exception | ResponseException e) {
+            return "please use a valid start and end position. Ex: move a2 a4";
+        }
     }
 
     private String resign(String[] params) {
@@ -64,5 +87,20 @@ public class InGameClient implements ReplClient {
                 """;
     }
 
+    ChessPosition moveParse(String position) throws ResponseException {
+        if (position.length() != 2) {
+            throw new ResponseException("invalid move");
+        }
 
+        char colChar = Character.toLowerCase(position.charAt(0));
+        int col = colChar - 'a' + 1;
+
+        int row = Character.getNumericValue(position.charAt(1));
+
+        if (row < 0 || row > 8 || col < 0 || col > 8) {
+            throw new ResponseException("invalid move");
+        }
+
+        return new ChessPosition(row, col);
+    }
 }
