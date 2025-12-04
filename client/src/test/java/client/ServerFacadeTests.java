@@ -34,7 +34,6 @@ public class ServerFacadeTests {
 
     @BeforeEach
     public void clearDatabase() {
-        // This method now calls the /db endpoint to clear the database
         try {
             URI uri = new URI(serverUrl + "/db");
             HttpURLConnection http = (HttpURLConnection) uri.toURL().openConnection();
