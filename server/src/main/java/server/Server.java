@@ -35,6 +35,15 @@ public class Server {
         }
 
         javalin = Javalin.create(config -> config.staticFiles.add("web"));
+
+        WebSocketHandler wsHandler = new WebSocketHandler();
+        javalin.ws("/ws", ws -> {
+            ws.onConnect(wsHandler::onConnect);
+            ws.onMessage(wsHandler::onMessage);
+            ws.onClose(wsHandler::onClose);
+            ws.onError(wsHandler::onError);
+        });
+
         this.javalin.delete("/db", ctx -> {
             try {
                 Clear.clearApp();
