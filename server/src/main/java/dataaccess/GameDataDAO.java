@@ -2,6 +2,7 @@ package dataaccess;
 
 import chess.ChessGame;
 import com.google.gson.Gson;
+import model.GameData;
 import model.GameDataList;
 
 import java.sql.Connection;
@@ -32,6 +33,10 @@ public class GameDataDAO extends DatabaseManager {
         return emptySQL(sqlScript);
     }
 
+    public int getGameID() {
+        return gameIdentify;
+    }
+
     public static List<GameDataList> listGames() {
         String sqlScript = "SELECT * FROM gameData";
         List<GameDataList> games = new ArrayList<>();
@@ -52,6 +57,32 @@ public class GameDataDAO extends DatabaseManager {
         } catch (SQLException | DataAccessException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public static GameData getGame(int gameId) {
+        String findGame = "SELECT usernameWhite, usernameBlack, gameName, chessGame FROM gameData WHERE gameID = ?";
+
+        try (var conn = DatabaseManager.getConnection()) {
+            var preparedStatement = conn.prepareStatement(findGame);
+            preparedStatement.setInt(1, gameId);
+            try (var rs = preparedStatement.executeQuery()) {
+                if (rs.next()) {
+                    String gameName = rs.getString("gameName");
+                    String jsonGame = rs.getString("chessGame");
+                    String whiteUser = rs.getString("usernameWhite");
+                    String blackUser = rs.getString("usernameBlack");
+
+                    ChessGame game = new Gson().fromJson(jsonGame, ChessGame.class);
+
+                    return new GameData(gameId, whiteUser, blackUser, gameName, game);
+                    }
+                } catch (SQLException ex) {
+                throw new RuntimeException(ex);
+            }
+        } catch (SQLException | DataAccessException ex) {
+            throw new RuntimeException(ex);
+        }
+        return null;
     }
 
     public static int createGame(String gameName) {

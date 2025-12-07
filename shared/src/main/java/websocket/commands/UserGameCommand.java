@@ -14,7 +14,7 @@ public class UserGameCommand {
 
     private final String authToken;
 
-    private final Integer gameID;
+    private final int gameID;
 
     public UserGameCommand(CommandType commandType, String authToken, Integer gameID) {
         this.commandType = commandType;
@@ -37,7 +37,7 @@ public class UserGameCommand {
         return authToken;
     }
 
-    public Integer getGameID() {
+    public int getGameID() {
         return gameID;
     }
 
