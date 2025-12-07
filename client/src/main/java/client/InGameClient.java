@@ -3,6 +3,7 @@ package client;
 import chess.ChessMove;
 import chess.ChessPosition;
 import jakarta.websocket.DeploymentException;
+import websocket.messages.LoadGameMessage;
 import websocket.messages.ServerMessage;
 
 import java.io.IOException;
@@ -113,7 +114,7 @@ public class InGameClient implements ReplClient, ServerMessageObserver {
         try {
             ws = new WebSocketFacade(serverUrl, this);
 
-            ws.connect(repl.authToken, repl.gameId);
+            ws.joinPlayer(repl.authToken, repl.gameId, true);
 
         } catch (DeploymentException | URISyntaxException | IOException e) {
             throw new RuntimeException(e);
@@ -122,6 +123,12 @@ public class InGameClient implements ReplClient, ServerMessageObserver {
 
     @Override
     public void notify(ServerMessage message) {
+        if (message.getServerMessageType() == ServerMessage.ServerMessageType.LOAD_GAME) {
+            LoadGameMessage loadGame = (LoadGameMessage) message;
 
+            System.out.println();
+
+            BoardDrawer.drawBoard(loadGame.getGame().getBoard(), repl.white);
+        }
     }
 }

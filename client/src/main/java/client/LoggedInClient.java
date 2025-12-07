@@ -63,8 +63,6 @@ public class LoggedInClient implements ReplClient {
 
         String color = params[1];
 
-        server.joinGame(repl.authToken, gameId, color);
-
         boolean white;
         if (color.equals("white")) {
             white = true;

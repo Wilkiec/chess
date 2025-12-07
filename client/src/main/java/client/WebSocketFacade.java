@@ -1,19 +1,49 @@
 package client;
 
 import chess.ChessMove;
+import com.google.gson.Gson;
 import jakarta.websocket.*;
+import websocket.messages.ErrorMessage;
+import websocket.messages.LoadGameMessage;
+import websocket.messages.NotificationMessage;
+import websocket.messages.ServerMessage;
 
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+@ClientEndpoint
 public class WebSocketFacade {
     public Session session;
 
     public WebSocketFacade(String serverUrl, ServerMessageObserver observer) throws URISyntaxException, DeploymentException, IOException {
-        URI socketURI = new URI("ws://localhost:8080/ws");
+        String urlServer = serverUrl.replace("http", "ws");
+
+        URI socketURI = new URI(urlServer + "/ws");
         WebSocketContainer container = ContainerProvider.getWebSocketContainer();
-        session = container.connectToServer(this, socketURI);
+        this.session = container.connectToServer(this, socketURI);
+
+        this.session.addMessageHandler(new MessageHandler.Whole<String>() {
+            @Override
+            public void onMessage(String message) {
+                ServerMessage serverMessage = new Gson().fromJson(message, ServerMessage.class);
+
+                switch (serverMessage.getServerMessageType()) {
+                    case LOAD_GAME -> {
+                        LoadGameMessage loadGameMessage = new Gson().fromJson(message, LoadGameMessage.class);
+                        observer.notify(loadGameMessage);
+                    }
+                    case ERROR -> {
+                        ErrorMessage errorMessage = new Gson().fromJson(message, ErrorMessage.class);
+                        observer.notify(errorMessage);
+                    }
+                    case NOTIFICATION -> {
+                        NotificationMessage notificationMessage = new Gson().fromJson(message, NotificationMessage.class);
+                        observer.notify(notificationMessage);
+                    }
+                }
+            }
+        });
     }
 
 
@@ -21,6 +51,6 @@ public class WebSocketFacade {
 
     }
 
-    public void connect(String authToken, int gameId) {
+    public void joinPlayer(String authToken, int gameId, boolean white) {
     }
 }
