@@ -92,6 +92,7 @@ public class Server {
             try {
                 String authToken = ctx.header("authorization");
                 List<GameDataList> game = Games.getGames(authToken);
+
                 ctx.status(200);
                 GameListResponse response = new GameListResponse(game);
                 Gson gson = new Gson();

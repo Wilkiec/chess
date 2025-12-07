@@ -1,29 +1,24 @@
 package server;
 
 import com.google.gson.Gson;
-import com.mysql.cj.jdbc.ConnectionGroupManager;
-import dataaccess.AuthDataDAO;
 import dataaccess.GameDataDAO;
 import io.javalin.websocket.WsCloseContext;
 import io.javalin.websocket.WsConnectContext;
 import io.javalin.websocket.WsErrorContext;
 import io.javalin.websocket.WsMessageContext;
-import model.AuthData;
 import model.GameData;
 import websocket.commands.UserGameCommand;
 import websocket.messages.ErrorMessage;
 import websocket.messages.LoadGameMessage;
 import websocket.messages.ServerMessage;
 
-import static javax.management.remote.JMXConnectorFactory.connect;
-
 public class WebSocketHandler {
     public void onConnect(WsConnectContext ctx) {
-        System.out.println("User Connected");
+        ctx.enableAutomaticPings();
     }
 
     public void onClose(WsCloseContext ctx) {
-        System.out.println("User disconnected");
+
     }
 
     public void onError(WsErrorContext ctx) {
@@ -33,10 +28,9 @@ public class WebSocketHandler {
     public void onMessage(WsMessageContext ctx) {
         try {
             UserGameCommand message = new Gson().fromJson(ctx.message(), UserGameCommand.class);
-            AuthData auth = AuthDataDAO.generateAuthData(AuthDataDAO.usernameOfAuthToken(message.getAuthToken()));
 
             switch (message.getCommandType()) {
-                case CONNECT -> connect(message.getGameID(), auth, ctx);
+                case CONNECT -> connect(message.getGameID(), ctx);
                 case LEAVE -> {
                     // game is updated. Removes user from game in database
                     // server sends  a notification message to all other clients that root left.
@@ -58,13 +52,14 @@ public class WebSocketHandler {
         }
     }
 
-    private void connect(int gameId, AuthData authData, WsMessageContext ctx) {
+    private void connect(int gameId, WsMessageContext ctx) {
         // have some way to make add the data to list of people in said game
 
         GameData gameData = GameDataDAO.getGame(gameId);
 
         if (gameData == null || gameData.game() == null) {
             ctx.send(new Gson().toJson(new ErrorMessage(ServerMessage.ServerMessageType.ERROR, "game does not exist")));
+            return;
         }
 
         LoadGameMessage message = new LoadGameMessage(ServerMessage.ServerMessageType.LOAD_GAME, gameData.game());

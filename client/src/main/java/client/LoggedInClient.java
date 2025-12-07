@@ -90,11 +90,10 @@ public class LoggedInClient implements ReplClient {
             return "No Games Available Right now";
         }
 
-        int gameNum = 1;
         StringBuilder games = new StringBuilder("Games:\n");
 
         for (GameData game : gameList.games()) {
-            games.append(gameNum++);
+            games.append(game.gameID());
             games.append(".  Game Name: ");
             games.append(game.gameName());
             games.append("  White: ");

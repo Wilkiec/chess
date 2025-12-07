@@ -13,7 +13,7 @@ import java.util.List;
 import static dataaccess.UserDataDAO.emptySQL;
 
 public class GameDataDAO extends DatabaseManager {
-    private static int gameIdentify = 1;
+    private static int gameIdentify = getNextId();
 
     public static void clearData() {
         String sqlScript = "TRUNCATE TABLE gameData";
@@ -27,14 +27,25 @@ public class GameDataDAO extends DatabaseManager {
         }
     }
 
+    private static int getNextId() {
+        String findLargestGameId = "SELECT MAX(gameID) FROM gameData";
+        try (var conn = DatabaseManager.getConnection()) {
+            var preparedStatement = conn.prepareStatement(findLargestGameId);
+            try (var rs = preparedStatement.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) + 1;
+                }
+            }
+        } catch (SQLException | DataAccessException e) {
+            return 1;
+        }
+        return 1;
+    }
+
     public static boolean isEmpty() {
         String sqlScript = "SELECT COUNT(*) FROM gameData";
 
         return emptySQL(sqlScript);
-    }
-
-    public int getGameID() {
-        return gameIdentify;
     }
 
     public static List<GameDataList> listGames() {
