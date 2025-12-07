@@ -28,7 +28,6 @@ public class WebSocketHandler {
     public void onMessage(WsMessageContext ctx) {
         try {
             UserGameCommand message = new Gson().fromJson(ctx.message(), UserGameCommand.class);
-
             switch (message.getCommandType()) {
                 case CONNECT -> connect(message.getGameID(), ctx);
                 case LEAVE -> {
@@ -54,7 +53,6 @@ public class WebSocketHandler {
 
     private void connect(int gameId, WsMessageContext ctx) {
         // have some way to make add the data to list of people in said game
-
         GameData gameData = GameDataDAO.getGame(gameId);
 
         if (gameData == null || gameData.game() == null) {

@@ -3,6 +3,7 @@ package client;
 import chess.ChessMove;
 import com.google.gson.Gson;
 import jakarta.websocket.*;
+import websocket.commands.UserGameCommand;
 import websocket.messages.ErrorMessage;
 import websocket.messages.LoadGameMessage;
 import websocket.messages.NotificationMessage;
@@ -15,8 +16,10 @@ import java.net.URISyntaxException;
 @ClientEndpoint
 public class WebSocketFacade {
     public Session session;
+    private ServerMessageObserver observer;
 
     public WebSocketFacade(String serverUrl, ServerMessageObserver observer) throws URISyntaxException, DeploymentException, IOException {
+        this.observer = observer;
         String urlServer = serverUrl.replace("http", "ws");
 
         URI socketURI = new URI(urlServer + "/ws");
@@ -46,11 +49,19 @@ public class WebSocketFacade {
         });
     }
 
-
     public static void makeMove(String authToken, int gameId, ChessMove move) {
 
     }
 
     public void joinPlayer(String authToken, int gameId, boolean white) {
+        try {
+            UserGameCommand command = new UserGameCommand(UserGameCommand.CommandType.CONNECT, authToken, gameId);
+
+            String message = new Gson().toJson(command);
+
+            this.session.getBasicRemote().sendText(message);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

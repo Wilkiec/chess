@@ -123,6 +123,7 @@ public class InGameClient implements ReplClient, ServerMessageObserver {
 
     @Override
     public void notify(ServerMessage message) {
+        System.out.println("at notify");
         if (message.getServerMessageType() == ServerMessage.ServerMessageType.LOAD_GAME) {
             LoadGameMessage loadGame = (LoadGameMessage) message;
 
