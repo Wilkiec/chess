@@ -39,7 +39,9 @@ public class GameDataDAO extends DatabaseManager {
     }
 
     public static void updateGame(int gameId, GameData game) {
-        String updateGameSql = "UPDATE gameData SET usernameWhite = ?, usernameBlack = ?, gameName = ?, chessGame = ?, gameOver = ?, whiteWon = ? WHERE gameID = ?";
+        String updateGameSql = """
+        UPDATE gameData SET usernameWhite = ?, usernameBlack = ?, gameName = ?, chessGame = ?, gameOver = ?, whiteWon = ? WHERE gameID = ?
+        """;
 
         try (var conn = DatabaseManager.getConnection();
             var ps = conn.prepareStatement(updateGameSql)) {

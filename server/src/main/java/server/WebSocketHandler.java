@@ -105,7 +105,7 @@ public class WebSocketHandler {
 
         if (game.gameOver()) {
             String won = "Black won";
-            if (game.whiteWon()) won = "White won";
+            if (game.whiteWon()) {won = "White won"; }
             throw new BadRequestException("Game is over. " + won);
         }
 

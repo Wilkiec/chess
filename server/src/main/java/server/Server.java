@@ -29,13 +29,10 @@ public class Server {
     }
 
     public Server() {
-        try {
-            DatabaseManager.createDatabase();
-        } catch (DataAccessException ignored) {
-        }
+        try {DatabaseManager.createDatabase();}
+        catch (DataAccessException ignored) {}
 
         javalin = Javalin.create(config -> config.staticFiles.add("web"));
-
         WebSocketHandler wsHandler = new WebSocketHandler();
         javalin.ws("/ws", ws -> {
             ws.onConnect(wsHandler::onConnect);
@@ -91,7 +88,6 @@ public class Server {
             try {
                 String authToken = ctx.header("authorization");
                 List<GameDataList> game = Games.getGames(authToken);
-
                 ctx.status(200);
                 GameListResponse response = new GameListResponse(game);
                 Gson gson = new Gson();
@@ -121,7 +117,6 @@ public class Server {
             try {
                 GameJoinRequired gameInfo = new Gson().fromJson(ctx.body(), GameJoinRequired.class);
                 String authToken = ctx.header("authorization");
-
                 Games.joinGame(gameInfo.gameID(), gameInfo.playerColor(), authToken);
                 ctx.status(200);
             } catch (BadRequestException e) {sendJsonResponse(ctx, new ErrorResponse(e.getMessage()), 400);}

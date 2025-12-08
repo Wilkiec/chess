@@ -21,14 +21,14 @@ public class InGameClient implements ReplClient, ServerMessageObserver {
     private final Repl repl;
     private final String serverUrl;
     private WebSocketFacade ws;
-    private final boolean is_player;
+    private final boolean isPlayer;
     private ChessGame currentGame;
     private boolean whiteTurn = true;
 
     public InGameClient(Repl repl) {
         this.repl = repl;
         this.serverUrl = repl.serverUrl;
-        is_player = repl.player;
+        isPlayer = repl.player;
     }
 
     public String eval(String line) {
@@ -51,7 +51,7 @@ public class InGameClient implements ReplClient, ServerMessageObserver {
     }
 
     private String makeMove(String[] params) {
-        if (!is_player) {
+        if (!isPlayer) {
             return "observer cannot move piece";
         } if (params.length != 2) {
             return "please include start and end position";
@@ -80,33 +80,31 @@ public class InGameClient implements ReplClient, ServerMessageObserver {
             }
 
             // check if piece is promoting.
-            if (currentGame.getBoard().getPiece(startPos).getPieceType() == PAWN) {
-                if ((repl.white && endPos.getRow() == 8)
-                        || (!repl.white && endPos.getRow() == 1)) {
-                    Scanner scanner = new Scanner(System.in);
-                    do {
-                        System.out.println("""
-                            What would you like to promote your pawn to?
-                            - Queen
-                            - Rook
-                            - Bishop
-                            - Knight
-                            """);
+            if ((currentGame.getBoard().getPiece(startPos).getPieceType() == PAWN) && (repl.white && endPos.getRow() == 8)
+                    || (!repl.white && endPos.getRow() == 1)) {
+                Scanner scanner = new Scanner(System.in);
+                do {
+                    System.out.println("""
+                        What would you like to promote your pawn to?
+                        - Queen
+                        - Rook
+                        - Bishop
+                        - Knight
+                        """);
 
-                        String piece = scanner.nextLine();
-                        piece = piece.toLowerCase();
+                    String piece = scanner.nextLine();
+                    piece = piece.toLowerCase();
 
-                        switch (piece) {
-                            case "queen" -> promotionPiece = QUEEN;
-                            case "rook" -> promotionPiece = ROOK;
-                            case "bishop" -> promotionPiece = BISHOP;
-                            case "knight" -> promotionPiece = KNIGHT;
-                            default -> System.out.println("Invalid piece type, please try again.");
-                        }
-
-                    } while (promotionPiece == null);
-                }
+                    switch (piece) {
+                        case "queen" -> promotionPiece = QUEEN;
+                        case "rook" -> promotionPiece = ROOK;
+                        case "bishop" -> promotionPiece = BISHOP;
+                        case "knight" -> promotionPiece = KNIGHT;
+                        default -> System.out.println("Invalid piece type, please try again.");
+                    }
+                } while (promotionPiece == null);
             }
+
 
 
             ChessMove move = new ChessMove(startPos, endPos, promotionPiece);
@@ -120,7 +118,7 @@ public class InGameClient implements ReplClient, ServerMessageObserver {
     }
 
     private String resign(String[] params) {
-        if (!is_player) {
+        if (!isPlayer) {
             return "observer cannot resign";
         }
 
