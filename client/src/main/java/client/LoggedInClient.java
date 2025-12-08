@@ -44,6 +44,7 @@ public class LoggedInClient implements ReplClient {
             return "Please Provide a Valid Integer";
         }
 
+        repl.player = false;
         repl.setInGame(gameIdInt, false, true);
 
         return "Successfully Joined Game As Spectator";

@@ -35,7 +35,9 @@ public class DatabaseManager {
                     usernameWhite VARCHAR(255),
                     usernameBlack VARCHAR(255),
                     gameName VARCHAR(255) NOT NULL,
-                    chessGame TEXT
+                    chessGame TEXT,
+                    gameOver BOOLEAN,
+                    whiteWon BOOLEAN
                 );
                 """;
 

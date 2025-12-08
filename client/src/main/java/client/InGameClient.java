@@ -1,5 +1,6 @@
 package client;
 
+import chess.ChessGame;
 import chess.ChessMove;
 import chess.ChessPosition;
 import jakarta.websocket.DeploymentException;
@@ -9,15 +10,19 @@ import websocket.messages.ServerMessage;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Arrays;
+import java.util.Scanner;
 
 public class InGameClient implements ReplClient, ServerMessageObserver {
     private final Repl repl;
     private final String serverUrl;
     private WebSocketFacade ws;
+    private final boolean is_player;
+    private ChessGame currentGame;
 
     public InGameClient(Repl repl) {
         this.repl = repl;
         this.serverUrl = repl.serverUrl;
+        is_player = repl.player;
     }
 
     public String eval(String line) {
@@ -40,6 +45,10 @@ public class InGameClient implements ReplClient, ServerMessageObserver {
     }
 
     private String makeMove(String[] params) {
+        if (!is_player) {
+            return "observer cannot move piece";
+        }
+
         // parse user input:
         if (params.length != 2) {
             return "please include start and end position";
@@ -62,7 +71,26 @@ public class InGameClient implements ReplClient, ServerMessageObserver {
     }
 
     private String resign(String[] params) {
-        return "";
+        if (!is_player) {
+            return "observer cannot resign";
+        }
+
+        Scanner scanner = new Scanner(System.in);
+        if (params.length != 0) {
+            return "Resign Command Takes No Inputs";
+        }
+
+        System.out.println("Are you sure you would like to resign? Type 'yes' to confirm");
+
+        String confirmation = scanner.nextLine();
+
+        if (!confirmation.equals("yes")) {
+            return "Resignation canceled";
+        }
+
+        ws.resignGame(repl.gameId, repl.authToken);
+
+        return "successfully resigned game";
     }
 
     private String highlightLegalMoves(String[] params) {
@@ -70,6 +98,12 @@ public class InGameClient implements ReplClient, ServerMessageObserver {
     }
 
     private String redraw(String[] params) {
+        if (currentGame == null) {
+            return "no game to draw";
+        }
+
+        BoardDrawer.drawBoard(currentGame.getBoard(), repl.white);
+
         return "";
     }
 
@@ -78,7 +112,7 @@ public class InGameClient implements ReplClient, ServerMessageObserver {
             return "leave Command Takes No Inputs";
         }
 
-        ws.leaveSession(repl.gameId, repl.authToken, repl.white);
+        ws.leaveSession(repl.gameId, repl.authToken);
 
         repl.setLoggedIn(repl.authToken);
         return "successfully left game";
@@ -116,7 +150,7 @@ public class InGameClient implements ReplClient, ServerMessageObserver {
         try {
             this.ws = new WebSocketFacade(serverUrl, this);
 
-            ws.joinPlayer(repl.authToken, repl.gameId, repl.white);
+            ws.joinPlayer(repl.authToken, repl.gameId);
 
         } catch (DeploymentException | URISyntaxException | IOException e) {
             throw new RuntimeException(e);
@@ -125,9 +159,9 @@ public class InGameClient implements ReplClient, ServerMessageObserver {
 
     @Override
     public void notify(ServerMessage message) {
-        System.out.println("at notify");
         if (message.getServerMessageType() == ServerMessage.ServerMessageType.LOAD_GAME) {
             LoadGameMessage loadGame = (LoadGameMessage) message;
+            this.currentGame = loadGame.getGame();
 
             System.out.println();
 

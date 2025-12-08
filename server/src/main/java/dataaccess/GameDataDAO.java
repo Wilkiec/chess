@@ -31,16 +31,45 @@ public class GameDataDAO extends DatabaseManager {
         }
     }
 
+    public static void resign(int gameId, GameData gameData, boolean whiteWon) {
+        GameData resigned = new GameData(gameData.gameID(),gameData.whiteUsername(),
+                gameData.blackUsername(), gameData.gameName(), gameData.game(), true, whiteWon);
+
+        updateGame(gameId, resigned);
+    }
+
+    public static void updateGame(int gameId, GameData game) {
+        String updateGameSql = "UPDATE gameData SET (usernameWhite, usernameBlack, gameName, chessGame = ? WHERE gameID = ?";
+
+        try (var conn = DatabaseManager.getConnection();
+            var ps = conn.prepareStatement(updateGameSql)) {
+                var serializer = new Gson();
+                var chessGameJSON = serializer.toJson(game.game());
+                ps.setString(1, chessGameJSON);
+                ps.setInt(2, gameId);
+
+                int rowsUpdated = ps.executeUpdate();
+                if (rowsUpdated == 0) {
+                    throw new BadRequestException("Unable to find game with given gameID");
+                }
+        } catch (SQLException | DataAccessException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public static void removePlayer(boolean white, int gameId) {
         String removePlayer = "UPDATE gameData SET usernameWhite = NULL WHERE gameID = ?";
         if (!white) {
             removePlayer = "UPDATE gameData SET usernameBlack = NULL WHERE gameID = ?";
         }
 
-        try (var conn = DatabaseManager.getConnection()) {
-            var preparedStatement = conn.prepareStatement(removePlayer);
-            preparedStatement.setInt(1, gameId);
-            preparedStatement.executeUpdate();
+        try (var conn = DatabaseManager.getConnection();
+            var preparedStatement = conn.prepareStatement(removePlayer)) {
+                preparedStatement.setInt(1, gameId);
+                int updatedRows = preparedStatement.executeUpdate();
+                if (updatedRows == 0) {
+                    throw new BadRequestException("unable to find game with given gameID");
+                }
         } catch (SQLException | DataAccessException e) {
             throw new RuntimeException(e);
         }
@@ -56,8 +85,8 @@ public class GameDataDAO extends DatabaseManager {
         String sqlScript = "SELECT * FROM gameData";
         List<GameDataList> games = new ArrayList<>();
 
-        try (var conn = DatabaseManager.getConnection()) {
-            var preparedStatement = conn.prepareStatement(sqlScript);
+        try (var conn = DatabaseManager.getConnection();
+            var preparedStatement = conn.prepareStatement(sqlScript)) {
             try (var rs = preparedStatement.executeQuery()) {
                 while (rs.next()) {
                     int gameID = rs.getInt("gameID");
@@ -75,10 +104,10 @@ public class GameDataDAO extends DatabaseManager {
     }
 
     public static GameData getGame(int gameId) {
-        String findGame = "SELECT usernameWhite, usernameBlack, gameName, chessGame FROM gameData WHERE gameID = ?";
+        String findGame = "SELECT usernameWhite, usernameBlack, gameName, chessGame, gameOver, whiteWon FROM gameData WHERE gameID = ?";
 
-        try (var conn = DatabaseManager.getConnection()) {
-            var preparedStatement = conn.prepareStatement(findGame);
+        try (var conn = DatabaseManager.getConnection();
+            var preparedStatement = conn.prepareStatement(findGame)) {
             preparedStatement.setInt(1, gameId);
             try (var rs = preparedStatement.executeQuery()) {
                 if (rs.next()) {
@@ -86,10 +115,12 @@ public class GameDataDAO extends DatabaseManager {
                     String jsonGame = rs.getString("chessGame");
                     String whiteUser = rs.getString("usernameWhite");
                     String blackUser = rs.getString("usernameBlack");
+                    boolean gameOver = rs.getBoolean("gameOver");
+                    boolean whiteWon = rs.getBoolean("whiteWon");
 
                     ChessGame game = new Gson().fromJson(jsonGame, ChessGame.class);
 
-                    return new GameData(gameId, whiteUser, blackUser, gameName, game);
+                    return new GameData(gameId, whiteUser, blackUser, gameName, game, gameOver, whiteWon);
                     }
                 } catch (SQLException ex) {
                 throw new RuntimeException(ex);
@@ -102,14 +133,14 @@ public class GameDataDAO extends DatabaseManager {
 
     public static int createGame(String gameName) {
         String gameNameAlrExist = "SELECT 1 FROM gameData WHERE gameName = ?";
-        String insertGameName = "INSERT INTO gameData (gameName, chessGame) VALUES (?, ?)";
+        String insertGameName = "INSERT INTO gameData (gameName, chessGame, gameOver, whiteWon) VALUES (?, ?, ?, ?)";
 
-        try (var conn = DatabaseManager.getConnection()) {
-            var preparedStatement = conn.prepareStatement(gameNameAlrExist);
+        try (var conn = DatabaseManager.getConnection();
+            var preparedStatement = conn.prepareStatement(gameNameAlrExist)) {
             preparedStatement.setString(1, gameName);
             try (var rs = preparedStatement.executeQuery()) {
                 if (rs.next()) {
-                    throw new BadRequestException("bad request");
+                    throw new BadRequestException("Game Name already exists");
                 }
             }
 
@@ -120,6 +151,8 @@ public class GameDataDAO extends DatabaseManager {
             var chessGameJSON = serializer.toJson(new ChessGame());
             ps.setString(1, gameName);
             ps.setString(2, chessGameJSON);
+            ps.setBoolean(3, false);
+            ps.setBoolean(4, false);
 
             ps.executeUpdate();
             try (var generatedKeys = ps.getGeneratedKeys()){
@@ -146,9 +179,9 @@ public class GameDataDAO extends DatabaseManager {
             userAlrExists = "SELECT usernameBlack FROM gameData WHERE gameID = ? ";
         }
 
-        try (var conn = DatabaseManager.getConnection()) {
+        try (var conn = DatabaseManager.getConnection();
+            var preparedStatement = conn.prepareStatement(userAlrExists)) {
             // checking to make sure the game has been created and not trying to join a non-existent game
-            var preparedStatement = conn.prepareStatement(userAlrExists);
             preparedStatement.setInt(1, gameID);
             try (var rs = preparedStatement.executeQuery()) {
                 if (!rs.next()) {
@@ -162,14 +195,15 @@ public class GameDataDAO extends DatabaseManager {
                 }
 
                 // inserting username into the specific team color
-                preparedStatement = conn.prepareStatement(insertGameName);
-                preparedStatement.setString(1, username);
-                preparedStatement.setInt(2, gameID);
+                try (var preparedStatement1 = conn.prepareStatement(insertGameName)) {
+                    preparedStatement1.setString(1, username);
+                    preparedStatement1.setInt(2, gameID);
 
-                try {
-                    preparedStatement.executeUpdate();
-                } catch (SQLException e) {
-                    throw new RuntimeException(e);
+                    try {
+                        preparedStatement1.executeUpdate();
+                    } catch (SQLException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
             }
         } catch (SQLException | DataAccessException e) {

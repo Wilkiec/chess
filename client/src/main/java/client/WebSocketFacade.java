@@ -24,30 +24,27 @@ public class WebSocketFacade {
         WebSocketContainer container = ContainerProvider.getWebSocketContainer();
         this.session = container.connectToServer(this, socketURI);
 
-        this.session.addMessageHandler(new MessageHandler.Whole<String>() {
-            @Override
-            public void onMessage(String message) {
-                ServerMessage serverMessage = new Gson().fromJson(message, ServerMessage.class);
+        this.session.addMessageHandler((MessageHandler.Whole<String>) message -> {
+            ServerMessage serverMessage = new Gson().fromJson(message, ServerMessage.class);
 
-                switch (serverMessage.getServerMessageType()) {
-                    case LOAD_GAME -> {
-                        LoadGameMessage loadGameMessage = new Gson().fromJson(message, LoadGameMessage.class);
-                        observer.notify(loadGameMessage);
-                    }
-                    case ERROR -> {
-                        ErrorMessage errorMessage = new Gson().fromJson(message, ErrorMessage.class);
-                        observer.notify(errorMessage);
-                    }
-                    case NOTIFICATION -> {
-                        NotificationMessage notificationMessage = new Gson().fromJson(message, NotificationMessage.class);
-                        observer.notify(notificationMessage);
-                    }
+            switch (serverMessage.getServerMessageType()) {
+                case LOAD_GAME -> {
+                    LoadGameMessage loadGameMessage = new Gson().fromJson(message, LoadGameMessage.class);
+                    observer.notify(loadGameMessage);
+                }
+                case ERROR -> {
+                    ErrorMessage errorMessage = new Gson().fromJson(message, ErrorMessage.class);
+                    observer.notify(errorMessage);
+                }
+                case NOTIFICATION -> {
+                    NotificationMessage notificationMessage = new Gson().fromJson(message, NotificationMessage.class);
+                    observer.notify(notificationMessage);
                 }
             }
         });
     }
 
-    public void leaveSession(int gameId, String authToken, boolean white) {
+    public void leaveSession(int gameId, String authToken) {
         try {
             UserGameCommand command = new UserGameCommand(UserGameCommand.CommandType.LEAVE, authToken, gameId);
 
@@ -63,9 +60,21 @@ public class WebSocketFacade {
 
     }
 
-    public void joinPlayer(String authToken, int gameId, boolean white) {
+    public void joinPlayer(String authToken, int gameId) {
         try {
             UserGameCommand command = new UserGameCommand(UserGameCommand.CommandType.CONNECT, authToken, gameId);
+
+            String message = new Gson().toJson(command);
+
+            this.session.getBasicRemote().sendText(message);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void resignGame(int gameId, String authToken) {
+        try {
+            UserGameCommand command = new UserGameCommand(UserGameCommand.CommandType.RESIGN, authToken, gameId);
 
             String message = new Gson().toJson(command);
 

@@ -32,13 +32,13 @@ public class WebSocketHandler {
         try {
             UserGameCommand message = new Gson().fromJson(ctx.message(), UserGameCommand.class);
             AuthData auth = AuthDataDAO.generateAuthData(AuthDataDAO.usernameOfAuthToken(message.getAuthToken()));
+            if (!AuthDataDAO.containsToken(auth.authToken())) {
+                throw new BadRequestException("Unauthorized");
+            }
             switch (message.getCommandType()) {
                 case CONNECT -> connect(message.getGameID(), ctx);
                 case LEAVE -> leave(message.getGameID(), auth);
-                case RESIGN -> {
-                    // server marks the game as complete (no more moves can be completed)
-                    // server sends a notification message to all clients in the game informing that root resigned
-                }
+                case RESIGN -> resign(message.getGameID(), auth);
                 case MAKE_MOVE -> {
                     // server verifies validity of move
                     // game updates to represent new move
@@ -84,4 +84,28 @@ public class WebSocketHandler {
 
         // server sends  a notification message to all other clients that root left.
     }
+
+    private void resign(int gameId, AuthData auth) {
+        // server marks the game as complete (no more moves can be completed)
+        GameData gameData = GameDataDAO.getGame(gameId);
+        if (gameData == null || gameData.game() == null) {
+            throw new BadRequestException("Game Does Not Exist");
+        }
+
+        if (gameData.gameOver()) {
+            String thisColorWon = "White won";
+            if (!gameData.whiteWon()) {
+                thisColorWon = "Black won";
+            }
+            throw new BadRequestException("Game is already over." + thisColorWon);
+        }
+
+        if (auth.username().equals(gameData.blackUsername())) {
+            GameDataDAO.resign(gameId, gameData, true);
+        } else if (auth.username().equals(gameData.whiteUsername())) {
+            GameDataDAO.resign(gameId, gameData, false);
+        }
+        // server sends a notification message to all clients in the game informing that root resigned
+    }
+
 }
