@@ -16,10 +16,8 @@ import java.net.URISyntaxException;
 @ClientEndpoint
 public class WebSocketFacade {
     public Session session;
-    private ServerMessageObserver observer;
 
     public WebSocketFacade(String serverUrl, ServerMessageObserver observer) throws URISyntaxException, DeploymentException, IOException {
-        this.observer = observer;
         String urlServer = serverUrl.replace("http", "ws");
 
         URI socketURI = new URI(urlServer + "/ws");
