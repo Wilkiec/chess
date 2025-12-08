@@ -47,6 +47,18 @@ public class WebSocketFacade {
         });
     }
 
+    public void leaveSession(int gameId, String authToken, boolean white) {
+        try {
+            UserGameCommand command = new UserGameCommand(UserGameCommand.CommandType.LEAVE, authToken, gameId);
+
+            String message = new Gson().toJson(command);
+
+            this.session.getBasicRemote().sendText(message);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public static void makeMove(String authToken, int gameId, ChessMove move) {
 
     }

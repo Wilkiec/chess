@@ -31,7 +31,7 @@ public class DatabaseManager {
 
         String createGameDataSql = """
                 CREATE TABLE IF NOT EXISTS gameData (
-                    gameID INT NOT NULL,
+                    gameID INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
                     usernameWhite VARCHAR(255),
                     usernameBlack VARCHAR(255),
                     gameName VARCHAR(255) NOT NULL,

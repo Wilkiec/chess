@@ -78,6 +78,8 @@ public class InGameClient implements ReplClient, ServerMessageObserver {
             return "leave Command Takes No Inputs";
         }
 
+        ws.leaveSession(repl.gameId, repl.authToken, repl.white);
+
         repl.setLoggedIn(repl.authToken);
         return "successfully left game";
     }
@@ -112,9 +114,9 @@ public class InGameClient implements ReplClient, ServerMessageObserver {
 
     public void enter() {
         try {
-            ws = new WebSocketFacade(serverUrl, this);
+            this.ws = new WebSocketFacade(serverUrl, this);
 
-            ws.joinPlayer(repl.authToken, repl.gameId, true);
+            ws.joinPlayer(repl.authToken, repl.gameId, repl.white);
 
         } catch (DeploymentException | URISyntaxException | IOException e) {
             throw new RuntimeException(e);

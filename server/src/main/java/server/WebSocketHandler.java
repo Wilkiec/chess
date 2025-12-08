@@ -1,11 +1,14 @@
 package server;
 
 import com.google.gson.Gson;
+import dataaccess.AuthDataDAO;
+import dataaccess.BadRequestException;
 import dataaccess.GameDataDAO;
 import io.javalin.websocket.WsCloseContext;
 import io.javalin.websocket.WsConnectContext;
 import io.javalin.websocket.WsErrorContext;
 import io.javalin.websocket.WsMessageContext;
+import model.AuthData;
 import model.GameData;
 import websocket.commands.UserGameCommand;
 import websocket.messages.ErrorMessage;
@@ -28,12 +31,10 @@ public class WebSocketHandler {
     public void onMessage(WsMessageContext ctx) {
         try {
             UserGameCommand message = new Gson().fromJson(ctx.message(), UserGameCommand.class);
+            AuthData auth = AuthDataDAO.generateAuthData(AuthDataDAO.usernameOfAuthToken(message.getAuthToken()));
             switch (message.getCommandType()) {
                 case CONNECT -> connect(message.getGameID(), ctx);
-                case LEAVE -> {
-                    // game is updated. Removes user from game in database
-                    // server sends  a notification message to all other clients that root left.
-                }
+                case LEAVE -> leave(message.getGameID(), auth);
                 case RESIGN -> {
                     // server marks the game as complete (no more moves can be completed)
                     // server sends a notification message to all clients in the game informing that root resigned
@@ -65,5 +66,22 @@ public class WebSocketHandler {
         ctx.send(new Gson().toJson(message));
 
         // figure out how to send to everyone else that user joined.
+    }
+
+    private void leave(int gameId, AuthData auth) {
+        // game is updated. Removes user from game in database
+        GameData gameData = GameDataDAO.getGame(gameId);
+
+        if (gameData == null || gameData.game() == null) {
+            throw new BadRequestException("Game Does Not Exist");
+        }
+
+        if (auth.username().equals(gameData.blackUsername())) {
+            GameDataDAO.removePlayer(false, gameId);
+        } else if (auth.username().equals(gameData.whiteUsername())) {
+            GameDataDAO.removePlayer(true, gameId);
+        }
+
+        // server sends  a notification message to all other clients that root left.
     }
 }

@@ -7,19 +7,23 @@ import model.GameDataList;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
 import static dataaccess.UserDataDAO.emptySQL;
 
 public class GameDataDAO extends DatabaseManager {
-    private static int gameIdentify = getNextId();
 
     public static void clearData() {
         String sqlScript = "TRUNCATE TABLE gameData";
+        String resetSequenceSql = "ALTER TABLE gameData AUTO_INCREMENT = 1";
 
         try (Connection conn = DatabaseManager.getConnection()) {
             try (var preparedStatement = conn.prepareStatement(sqlScript)) {
+                preparedStatement.executeUpdate();
+            }
+            try (var preparedStatement = conn.prepareStatement(resetSequenceSql)) {
                 preparedStatement.executeUpdate();
             }
         } catch (SQLException | DataAccessException e) {
@@ -27,19 +31,19 @@ public class GameDataDAO extends DatabaseManager {
         }
     }
 
-    private static int getNextId() {
-        String findLargestGameId = "SELECT MAX(gameID) FROM gameData";
-        try (var conn = DatabaseManager.getConnection()) {
-            var preparedStatement = conn.prepareStatement(findLargestGameId);
-            try (var rs = preparedStatement.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getInt(1) + 1;
-                }
-            }
-        } catch (SQLException | DataAccessException e) {
-            return 1;
+    public static void removePlayer(boolean white, int gameId) {
+        String removePlayer = "UPDATE gameData SET usernameWhite = NULL WHERE gameID = ?";
+        if (!white) {
+            removePlayer = "UPDATE gameData SET usernameBlack = NULL WHERE gameID = ?";
         }
-        return 1;
+
+        try (var conn = DatabaseManager.getConnection()) {
+            var preparedStatement = conn.prepareStatement(removePlayer);
+            preparedStatement.setInt(1, gameId);
+            preparedStatement.executeUpdate();
+        } catch (SQLException | DataAccessException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static boolean isEmpty() {
@@ -98,7 +102,7 @@ public class GameDataDAO extends DatabaseManager {
 
     public static int createGame(String gameName) {
         String gameNameAlrExist = "SELECT 1 FROM gameData WHERE gameName = ?";
-        String insertGameName = "INSERT INTO gameData (gameID, gameName, chessGame) VALUES (?, ?, ?)";
+        String insertGameName = "INSERT INTO gameData (gameName, chessGame) VALUES (?, ?)";
 
         try (var conn = DatabaseManager.getConnection()) {
             var preparedStatement = conn.prepareStatement(gameNameAlrExist);
@@ -109,18 +113,21 @@ public class GameDataDAO extends DatabaseManager {
                 }
             }
 
-            int uniqueId = gameIdentify++;
-            var ps = conn.prepareStatement(insertGameName);
+            var ps = conn.prepareStatement(insertGameName, Statement.RETURN_GENERATED_KEYS);
 
             // turning chessGame into JSON.
             var serializer = new Gson();
             var chessGameJSON = serializer.toJson(new ChessGame());
-            ps.setInt(1, uniqueId);
-            ps.setString(2, gameName);
-            ps.setString(3, chessGameJSON);
-            try {
-                ps.executeUpdate();
-                return uniqueId;
+            ps.setString(1, gameName);
+            ps.setString(2, chessGameJSON);
+
+            ps.executeUpdate();
+            try (var generatedKeys = ps.getGeneratedKeys()){
+                if (generatedKeys.next()) {
+                    return generatedKeys.getInt(1);
+                } else {
+                    throw new SQLException("No ID obtained");
+                }
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
