@@ -4,7 +4,9 @@ import chess.ChessGame;
 import chess.ChessMove;
 import chess.ChessPosition;
 import jakarta.websocket.DeploymentException;
+import websocket.messages.ErrorMessage;
 import websocket.messages.LoadGameMessage;
+import websocket.messages.NotificationMessage;
 import websocket.messages.ServerMessage;
 
 import java.io.IOException;
@@ -90,14 +92,37 @@ public class InGameClient implements ReplClient, ServerMessageObserver {
 
         ws.resignGame(repl.gameId, repl.authToken);
 
-        return "successfully resigned game";
+        return "";
     }
 
     private String highlightLegalMoves(String[] params) {
+        if (currentGame == null) {
+            return "no game to draw";
+        } if (params.length != 1) {
+            return "highlight command takes one input";
+        }
+
+        try {
+            ChessPosition piece = moveParse(params[0]);
+            var validMoves = currentGame.validMoves(piece);
+
+            if (validMoves == null || validMoves.isEmpty()) {
+                BoardDrawer.drawBoard(currentGame.getBoard(), repl.white);
+                return "No moves possible";
+            }
+
+            BoardDrawer.drawValidMoves(currentGame.getBoard(), repl.white, validMoves);
+        } catch (ResponseException e) {
+            throw new RuntimeException(e);
+        }
+
         return "";
     }
 
     private String redraw(String[] params) {
+        if (params.length != 0) {
+            return "redraw command takes no input";
+        }
         if (currentGame == null) {
             return "no game to draw";
         }
@@ -115,7 +140,7 @@ public class InGameClient implements ReplClient, ServerMessageObserver {
         ws.leaveSession(repl.gameId, repl.authToken);
 
         repl.setLoggedIn(repl.authToken);
-        return "successfully left game";
+        return "";
     }
 
     public String help() throws ResponseException {
@@ -159,13 +184,29 @@ public class InGameClient implements ReplClient, ServerMessageObserver {
 
     @Override
     public void notify(ServerMessage message) {
-        if (message.getServerMessageType() == ServerMessage.ServerMessageType.LOAD_GAME) {
-            LoadGameMessage loadGame = (LoadGameMessage) message;
-            this.currentGame = loadGame.getGame();
+        switch (message.getServerMessageType()) {
+            case LOAD_GAME -> {
+                LoadGameMessage loadGame = (LoadGameMessage) message;
+                this.currentGame = loadGame.getGame();
 
-            System.out.println();
+                System.out.println();
 
-            BoardDrawer.drawBoard(loadGame.getGame().getBoard(), repl.white);
+                BoardDrawer.drawBoard(loadGame.getGame().getBoard(), repl.white);
+            }
+            case ERROR -> {
+                ErrorMessage error = (ErrorMessage) message;
+
+                System.out.println();
+                System.out.println(error.getErrorMessage());
+            }
+            case NOTIFICATION -> {
+                NotificationMessage noti = (NotificationMessage) message;
+
+                System.out.println();
+                System.out.println(noti);
+            }
         }
+
+
     }
 }

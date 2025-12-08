@@ -39,14 +39,19 @@ public class GameDataDAO extends DatabaseManager {
     }
 
     public static void updateGame(int gameId, GameData game) {
-        String updateGameSql = "UPDATE gameData SET (usernameWhite, usernameBlack, gameName, chessGame = ? WHERE gameID = ?";
+        String updateGameSql = "UPDATE gameData SET usernameWhite = ?, usernameBlack = ?, gameName = ?, chessGame = ?, gameOver = ?, whiteWon = ? WHERE gameID = ?";
 
         try (var conn = DatabaseManager.getConnection();
             var ps = conn.prepareStatement(updateGameSql)) {
                 var serializer = new Gson();
                 var chessGameJSON = serializer.toJson(game.game());
-                ps.setString(1, chessGameJSON);
-                ps.setInt(2, gameId);
+                ps.setString(1, game.whiteUsername());
+                ps.setString(2, game.blackUsername());
+                ps.setString(3, game.gameName());
+                ps.setString(4, chessGameJSON);
+                ps.setBoolean(5, game.gameOver());
+                ps.setBoolean(6, game.whiteWon());
+                ps.setInt(7, gameId);
 
                 int rowsUpdated = ps.executeUpdate();
                 if (rowsUpdated == 0) {

@@ -24,21 +24,24 @@ public class WebSocketFacade {
         WebSocketContainer container = ContainerProvider.getWebSocketContainer();
         this.session = container.connectToServer(this, socketURI);
 
-        this.session.addMessageHandler((MessageHandler.Whole<String>) message -> {
-            ServerMessage serverMessage = new Gson().fromJson(message, ServerMessage.class);
+        this.session.addMessageHandler(new MessageHandler.Whole<String>() {
+            @Override
+            public void onMessage(String message) {
+                ServerMessage serverMessage = new Gson().fromJson(message, ServerMessage.class);
 
-            switch (serverMessage.getServerMessageType()) {
-                case LOAD_GAME -> {
-                    LoadGameMessage loadGameMessage = new Gson().fromJson(message, LoadGameMessage.class);
-                    observer.notify(loadGameMessage);
-                }
-                case ERROR -> {
-                    ErrorMessage errorMessage = new Gson().fromJson(message, ErrorMessage.class);
-                    observer.notify(errorMessage);
-                }
-                case NOTIFICATION -> {
-                    NotificationMessage notificationMessage = new Gson().fromJson(message, NotificationMessage.class);
-                    observer.notify(notificationMessage);
+                switch (serverMessage.getServerMessageType()) {
+                    case LOAD_GAME -> {
+                        LoadGameMessage loadGameMessage = new Gson().fromJson(message, LoadGameMessage.class);
+                        observer.notify(loadGameMessage);
+                    }
+                    case ERROR -> {
+                        ErrorMessage errorMessage = new Gson().fromJson(message, ErrorMessage.class);
+                        observer.notify(errorMessage);
+                    }
+                    case NOTIFICATION -> {
+                        NotificationMessage notificationMessage = new Gson().fromJson(message, NotificationMessage.class);
+                        observer.notify(notificationMessage);
+                    }
                 }
             }
         });
