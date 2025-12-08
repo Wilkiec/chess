@@ -23,7 +23,6 @@ public class InGameClient implements ReplClient, ServerMessageObserver {
     private WebSocketFacade ws;
     private final boolean isPlayer;
     private ChessGame currentGame;
-    private boolean whiteTurn = true;
 
     public InGameClient(Repl repl) {
         this.repl = repl;
@@ -55,8 +54,6 @@ public class InGameClient implements ReplClient, ServerMessageObserver {
             return "observer cannot move piece";
         } if (params.length != 2) {
             return "please include start and end position";
-        } if (repl.white ^ whiteTurn) {
-            return "Not your turn, wait for opponent to move";
         }
 
         ChessPiece.PieceType promotionPiece = null;
@@ -110,7 +107,6 @@ public class InGameClient implements ReplClient, ServerMessageObserver {
             ChessMove move = new ChessMove(startPos, endPos, promotionPiece);
 
             ws.makeMove(repl.authToken, repl.gameId, move);
-            whiteTurn = !whiteTurn;
             return "";
         } catch (Exception | ResponseException e) {
             return "please use a valid start and end position. Ex: move a2 a4";

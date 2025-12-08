@@ -132,15 +132,15 @@ public class WebSocketHandler {
         String updateOnGame = authData.username() + " made the move: " + move;
         boolean gameOver = false;
         boolean whiteWon = false;
-        if (game.game().isInCheck(ChessGame.TeamColor.WHITE)) {
-            updateOnGame += "\nWhite is in check";
-        } else if (game.game().isInCheck(ChessGame.TeamColor.BLACK)) {
-            updateOnGame += "\nBlack is in check";
-        } else if (game.game().isInCheckmate(ChessGame.TeamColor.WHITE)) {
-            updateOnGame += "\nWhite is in checkmate";
-            gameOver = true;
+        if (game.game().isInCheckmate(ChessGame.TeamColor.WHITE)) {
+            updateOnGame += "\n" + authData.username() + " (White) is in checkmate";
         } else if (game.game().isInCheckmate(ChessGame.TeamColor.BLACK)) {
-            updateOnGame += "\nBlack is in checkmate";
+            updateOnGame += "\n" + authData.username() + " (Black) is in checkmate";
+        } else if (game.game().isInCheck(ChessGame.TeamColor.WHITE)) {
+            updateOnGame += "\n" + authData.username() + " (White) is in check";
+            gameOver = true;
+        } else if (game.game().isInCheck(ChessGame.TeamColor.BLACK)) {
+            updateOnGame += "\n" + authData.username() + " (Black) is in check";
             gameOver = true;
             whiteWon = true;
         } else if (game.game().isInStalemate(ChessGame.TeamColor.WHITE) || game.game().isInStalemate(ChessGame.TeamColor.BLACK)) {
