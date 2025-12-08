@@ -49,7 +49,7 @@ public class WebSocketFacade {
 
     public void leaveSession(int gameId, String authToken) {
         try {
-            UserGameCommand command = new UserGameCommand(UserGameCommand.CommandType.LEAVE, authToken, gameId);
+            UserGameCommand command = new UserGameCommand(UserGameCommand.CommandType.LEAVE, authToken, gameId, null);
 
             String message = new Gson().toJson(command);
 
@@ -59,13 +59,21 @@ public class WebSocketFacade {
         }
     }
 
-    public static void makeMove(String authToken, int gameId, ChessMove move) {
+    public void makeMove(String authToken, int gameId, ChessMove move) {
+        try {
+            UserGameCommand command = new UserGameCommand(UserGameCommand.CommandType.MAKE_MOVE, authToken, gameId, move);
 
+            String message = new Gson().toJson(command);
+
+            this.session.getBasicRemote().sendText(message);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void joinPlayer(String authToken, int gameId) {
         try {
-            UserGameCommand command = new UserGameCommand(UserGameCommand.CommandType.CONNECT, authToken, gameId);
+            UserGameCommand command = new UserGameCommand(UserGameCommand.CommandType.CONNECT, authToken, gameId, null);
 
             String message = new Gson().toJson(command);
 
@@ -77,7 +85,7 @@ public class WebSocketFacade {
 
     public void resignGame(int gameId, String authToken) {
         try {
-            UserGameCommand command = new UserGameCommand(UserGameCommand.CommandType.RESIGN, authToken, gameId);
+            UserGameCommand command = new UserGameCommand(UserGameCommand.CommandType.RESIGN, authToken, gameId, null);
 
             String message = new Gson().toJson(command);
 

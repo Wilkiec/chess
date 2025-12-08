@@ -100,6 +100,25 @@ public class AuthDataDAO {
         }
     }
 
+    public static AuthData getAuthData(String authToken) {
+        String getAuthData = "SELECT username FROM authData WHERE authToken = ?";
+        try (var conn = DatabaseManager.getConnection()) {
+            try (var ps = conn.prepareStatement(getAuthData)) {
+                ps.setString(1, authToken);
+                try (var rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        String username = rs.getString("username");
+                        return new AuthData(authToken, username);
+                    } else {
+                        return null;
+                    }
+                }
+            }
+        } catch (SQLException | DataAccessException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public static boolean containsUsername(String username) {
         String deleteUserAuth = "SELECT * FROM authData WHERE username = ?";
 

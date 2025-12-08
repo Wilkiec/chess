@@ -40,7 +40,6 @@ public class Server {
         javalin.ws("/ws", ws -> {
             ws.onConnect(wsHandler::onConnect);
             ws.onMessage(wsHandler::onMessage);
-            ws.onClose(wsHandler::onClose);
             ws.onError(wsHandler::onError);
         });
 

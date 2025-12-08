@@ -2,6 +2,7 @@ package client;
 
 import chess.ChessGame;
 import chess.ChessMove;
+import chess.ChessPiece;
 import chess.ChessPosition;
 import jakarta.websocket.DeploymentException;
 import websocket.messages.ErrorMessage;
@@ -14,12 +15,15 @@ import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Scanner;
 
+import static chess.ChessPiece.PieceType.*;
+
 public class InGameClient implements ReplClient, ServerMessageObserver {
     private final Repl repl;
     private final String serverUrl;
     private WebSocketFacade ws;
     private final boolean is_player;
     private ChessGame currentGame;
+    private boolean whiteTurn = true;
 
     public InGameClient(Repl repl) {
         this.repl = repl;
@@ -49,24 +53,67 @@ public class InGameClient implements ReplClient, ServerMessageObserver {
     private String makeMove(String[] params) {
         if (!is_player) {
             return "observer cannot move piece";
+        } if (params.length != 2) {
+            return "please include start and end position";
+        } if (repl.white ^ whiteTurn) {
+            return "Not your turn, wait for opponent to move";
         }
 
-        // parse user input:
-        if (params.length != 2) {
-            return "please include start and end position";
-        }
+        ChessPiece.PieceType promotionPiece = null;
 
         try {
             ChessPosition startPos = moveParse(params[0]);
             ChessPosition endPos = moveParse(params[1]);
 
-            // how to tell if user needs to specify promotion piece?
+            // check if move is valid
+            boolean moveValid = false;
+            var validMoves = currentGame.validMoves(startPos);
+            for (ChessMove move : validMoves) {
+                if (move.getEndPosition().equals(endPos)) {
+                    moveValid = true;
+                    break;
+                }
+            }
 
-            ChessMove move = new ChessMove(startPos, endPos, null);
+            if (!moveValid) {
+                return "Invalid move, please try again";
+            }
 
-            WebSocketFacade.makeMove(repl.authToken, repl.gameId, move);
+            // check if piece is promoting.
+            if (currentGame.getBoard().getPiece(startPos).getPieceType() == PAWN) {
+                if ((repl.white && endPos.getRow() == 8)
+                        || (!repl.white && endPos.getRow() == 1)) {
+                    Scanner scanner = new Scanner(System.in);
+                    do {
+                        System.out.println("""
+                            What would you like to promote your pawn to?
+                            - Queen
+                            - Rook
+                            - Bishop
+                            - Knight
+                            """);
 
-            return "move sent";
+                        String piece = scanner.nextLine();
+                        piece = piece.toLowerCase();
+
+                        switch (piece) {
+                            case "queen" -> promotionPiece = QUEEN;
+                            case "rook" -> promotionPiece = ROOK;
+                            case "bishop" -> promotionPiece = BISHOP;
+                            case "knight" -> promotionPiece = KNIGHT;
+                            default -> System.out.println("Invalid piece type, please try again.");
+                        }
+
+                    } while (promotionPiece == null);
+                }
+            }
+
+
+            ChessMove move = new ChessMove(startPos, endPos, promotionPiece);
+
+            ws.makeMove(repl.authToken, repl.gameId, move);
+            whiteTurn = !whiteTurn;
+            return "";
         } catch (Exception | ResponseException e) {
             return "please use a valid start and end position. Ex: move a2 a4";
         }
@@ -85,6 +132,7 @@ public class InGameClient implements ReplClient, ServerMessageObserver {
         System.out.println("Are you sure you would like to resign? Type 'yes' to confirm");
 
         String confirmation = scanner.nextLine();
+        confirmation = confirmation.toLowerCase();
 
         if (!confirmation.equals("yes")) {
             return "Resignation canceled";
@@ -203,10 +251,8 @@ public class InGameClient implements ReplClient, ServerMessageObserver {
                 NotificationMessage noti = (NotificationMessage) message;
 
                 System.out.println();
-                System.out.println(noti);
+                System.out.println(noti.getMessage());
             }
         }
-
-
     }
 }
